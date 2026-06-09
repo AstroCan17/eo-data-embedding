@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && add-apt-repository -y ppa:deadsnakes/ppa \
     && apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-dev python3.11-distutils \
+        build-essential \
         libgl1 libglib2.0-0 git \
     && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 \
     && ln -sf /usr/bin/python3.11 /usr/local/bin/python \
