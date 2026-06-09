@@ -3,6 +3,7 @@
 #   make build         build the GPU dev image
 #   make smoke         run the Phase-0 green-light smoke test (CPU-safe)
 #   make sanity        run the Phase-0 sanity check
+#   make clay-smoke    verify Clay loads + embeds both modalities (needs claymodel + ckpt)
 #   make extract       run Phase-1 embedding extraction (needs GPU)
 #   make app           launch the Gradio demo (CPU image) on :7860
 #   make shell         drop into a shell in the GPU dev container
@@ -11,7 +12,7 @@
 
 COMPOSE ?= docker compose
 
-.PHONY: build build-cpu shell shell-cpu sanity smoke extract app gpu-check clean
+.PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract app gpu-check clean
 
 build:
 	$(COMPOSE) build dev
@@ -30,6 +31,9 @@ sanity:
 
 smoke:
 	$(COMPOSE) run --rm dev-cpu python scripts/phase0_smoke.py
+
+clay-smoke:
+	$(COMPOSE) run --rm dev python scripts/phase1_clay_smoke.py --device cuda
 
 extract:
 	$(COMPOSE) run --rm dev python scripts/phase1_extract.py

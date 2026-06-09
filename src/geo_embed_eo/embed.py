@@ -42,18 +42,94 @@ class ViTEmbedder(nn.Module):
         return self.forward(x)
 
 
-def load_embedder(name: str = "timm-vit", **kw) -> ViTEmbedder:
-    """Factory. Phase 1: add 'clay' / 'prithvi' branches returning the same interface."""
+class ClayEmbedder:
+    """Clay v1.5 geospatial foundation model wrapped to the canonical `encode(x) -> (B, 1024)`.
+
+    Handles the full multi-band / SAR path: builds Clay's datacube (pixels + waves + gsd + time +
+    latlon), normalizes per the verified band stats, runs the FROZEN encoder, and returns the
+    class-token embedding. Input `x` is RAW (un-normalized) reflectance/backscatter of shape
+    (B, C, H, W) with C bands in Clay's expected order for `modality` (see `clay_metadata`).
+
+    Install (on the GPU host): `pip install claymodel` and download the checkpoint from
+    HuggingFace `made-with-clay/Clay` (clay-v1.5.ckpt). See research/04-clay-integration.md.
+
+    VERIFY-AT-RUNTIME (Clay's API has drifted across versions):
+      - encoder call path: `model.model.encoder(datacube)` vs `model.encoder(...)`
+      - datacube `time`/`latlon` shapes ([B,2] per current main; some versions use [B,4])
+    Both are isolated below and easy to flip.
+    """
+
+    def __init__(self, checkpoint: str | None = None, modality: str = "s2",
+                 device: str = "cuda", image_size: int | None = None):
+        import torch
+        from . import clay_metadata as M
+
+        try:
+            from claymodel.module import ClayMAEModule
+        except ImportError as e:
+            raise ImportError(
+                "claymodel not installed. On the GPU host: `pip install claymodel` and fetch "
+                "clay-v1.5.ckpt from HuggingFace `made-with-clay/Clay`."
+            ) from e
+
+        self.M = M
+        self.modality = modality
+        self.device = device
+        self.image_size = image_size or M.CLAY_IMAGE_SIZE
+        self.embed_dim = M.CLAY_EMBED_DIM
+        spec = M.CLAY[modality]
+        self._waves = torch.tensor(spec["waves"], dtype=torch.float32)
+        self._means = torch.tensor(spec["means"], dtype=torch.float32).view(1, -1, 1, 1)
+        self._stds = torch.tensor(spec["stds"], dtype=torch.float32).view(1, -1, 1, 1)
+        self._gsd = float(spec["gsd"])
+
+        self.model = ClayMAEModule.load_from_checkpoint(
+            checkpoint or M.CLAY_CHECKPOINT, map_location=device
+        )
+        self.model.eval().to(device)
+        for p in self.model.parameters():
+            p.requires_grad_(False)
+        self._encoder = getattr(getattr(self.model, "model", self.model), "encoder")
+
+    def _datacube(self, cube):
+        import torch
+        B = cube.shape[0]
+        return {
+            "pixels": cube.to(self.device),
+            "time": torch.zeros(B, 2, device=self.device),     # VERIFY shape vs installed version
+            "latlon": torch.zeros(B, 2, device=self.device),   # (zeros = location-agnostic embeddings)
+            "gsd": torch.tensor(self._gsd, device=self.device),
+            "waves": self._waves.to(self.device),
+        }
+
+    def encode(self, x):
+        """Raw (B, C, H, W) bands -> (B, 1024) embeddings (float, CPU)."""
+        import torch
+        import torch.nn.functional as F
+
+        x = x.float()
+        if x.shape[-1] != self.image_size or x.shape[-2] != self.image_size:
+            x = F.interpolate(x, size=(self.image_size, self.image_size),
+                              mode="bilinear", align_corners=False)
+        x = (x - self._means) / self._stds
+        with torch.no_grad():
+            out = self._encoder(self._datacube(x))
+            patches = out[0] if isinstance(out, (tuple, list)) else out
+            emb = patches[:, 0, :]          # class token at index 0
+        return emb.float().cpu()
+
+    __call__ = encode
+
+
+def load_embedder(name: str = "timm-vit", **kw):
+    """Factory returning anything with `encode(x) -> (B, D)`."""
     if name in ("timm-vit", "sanity", "baseline"):
         return ViTEmbedder(**kw)
     if name == "clay":
-        raise NotImplementedError(
-            "Phase 1: wire up Clay (github.com/Clay-foundation/model). "
-            "Wrap its encoder to expose forward(x)->(B, D)."
-        )
+        return ClayEmbedder(**kw)
     if name == "prithvi":
         raise NotImplementedError(
-            "Phase 1: wire up Prithvi-EO-2.0 (hf: ibm-nasa-geospatial). "
-            "Wrap its encoder to expose forward(x)->(B, D)."
+            "Optical fallback — wire up Prithvi-EO-2.0 (hf: ibm-nasa-geospatial) if needed. "
+            "See research/02-foundation-models.md."
         )
     raise ValueError(f"unknown embedder: {name}")
