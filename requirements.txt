@@ -8,6 +8,12 @@ lightning>=2.2       # training loop for probe / baseline CNN
 torchgeo>=0.6        # datasets (EuroSAT, BigEarthNet, OSCD) + pretrained weights + samplers
 datasets>=2.19       # HuggingFace dataset mirrors (e.g. OSCD)
 webdataset>=0.2      # streaming loaders (e.g. SSL4EO-S12 cross-modal)
+# SSL4EO-S12 v1.1 streaming loader deps (the loader itself is cloned in the Dockerfile):
+zarr==2.18.0
+numcodecs==0.15.1
+xarray
+braceexpand
+albumentations
 rasterio>=1.3
 # stackstac>=0.5     # uncomment for raw Sentinel pulls via Planetary Computer
 # pystac-client>=0.7

@@ -44,6 +44,11 @@ RUN mkdir -p /opt/clay && \
     curl -sSL https://raw.githubusercontent.com/Clay-foundation/model/main/configs/metadata.yaml \
         -o /opt/clay/metadata.yaml
 
+# SSL4EO-S12 v1.1 streaming loader (cross-modal). The repo is NOT a pip package (no setup.py),
+# so we clone it and put it on PYTHONPATH; its deps are in requirements.txt above.
+RUN git clone --depth 1 https://github.com/DLR-MF-DAS/SSL4EO-S12-v1.1.git /opt/ssl4eos12
+ENV PYTHONPATH=/opt/ssl4eos12:${PYTHONPATH}
+
 COPY pyproject.toml ./
 COPY src ./src
 RUN python -m pip install -e .
