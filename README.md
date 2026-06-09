@@ -108,15 +108,16 @@ python scripts/phase0_smoke.py
 
 ## Phases
 
-| Phase | Script | What | Compute |
+| Phase | Script | What | Status |
 |---|---|---|---|
-| 0 — Sanity | `scripts/phase0_sanity.py` | One image → embedding, assert shape | CPU / Colab |
-| 0 — Smoke (gate) | `scripts/phase0_smoke.py` | Full pipeline on a stand-in encoder: embed → store → FAISS → probe | CPU / Colab |
-| 1 — Extract | `scripts/phase1_extract.py` | BigEarthNet-MM S1+S2 → `artifacts/embeddings.parquet` | **P40 (fp32)** |
-| 2 — Search | `scripts/phase2_search.py` | FAISS index + top-N retrieval | Colab T4 |
-| 3 — Probe | `scripts/phase3_probe.py` | Few-shot linear probe vs CNN baseline | **Kaggle 2×T4** |
-| 4 — App | `scripts/phase4_app.py` | Gradio search UI + Docker | local |
-| Stretch — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding map | Colab T4 |
+| 0 — Sanity | `scripts/phase0_sanity.py` | One image → embedding, assert shape | ✅ |
+| 0 — Smoke (gate) | `scripts/phase0_smoke.py` | Full pipeline on a stand-in encoder: embed → store → FAISS → probe | ✅ |
+| 1 — Extract | `scripts/phase1_extract.py` | EuroSAT (`--dataset bigearthnet` for multi-modal) → `embeddings.parquet` | ✅ EuroSAT |
+| 2 — Search | `scripts/phase2_search.py` | FAISS retrieval — precision@10 = 0.824 | ✅ |
+| 3 — Probe | `scripts/phase3_probe.py` | Few-shot linear probe — 0.90 macro-F1 @50/class | ✅ |
+| 6 — Cross-modal | `scripts/phase6_crossmodal.py` | SAR↔optical retrieval + learned alignment | ✅ |
+| 4 — App | `scripts/phase4_app.py` | Gradio search UI | ⬜ stub |
+| 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ⚠️ coded; OSCD source offline/throttled |
 
 See [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) for the full plan, datasets, and rationale.
 
