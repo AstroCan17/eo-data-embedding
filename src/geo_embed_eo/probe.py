@@ -27,7 +27,7 @@ def linear_probe(X: np.ndarray, y: np.ndarray, shots: int, seed: int = 42) -> di
     from sklearn.metrics import f1_score, accuracy_score
 
     tr, te = few_shot_split(y, shots, seed)
-    clf = LogisticRegression(max_iter=2000, n_jobs=-1)
+    clf = LogisticRegression(max_iter=2000)
     clf.fit(X[tr], y[tr])
     pred = clf.predict(X[te])
     return {

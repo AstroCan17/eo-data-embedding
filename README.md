@@ -7,6 +7,30 @@ imagery, then do similarity search, few-shot classification, and change detectio
 > A small, working replica of the modern EO-foundation-model + embeddings stack.
 > We **use** a pretrained ViT (Clay / Prithvi) — we do not train one from scratch.
 
+## Results
+
+Real run: **frozen Clay v1.5** (1024-d) embeddings over **2,000 EuroSAT** Sentinel-2 patches
+(10 Clay bands), on a Tesla P40. No fine-tuning — a linear probe on top of frozen embeddings.
+
+**Few-shot linear probe** (label efficiency):
+
+| Labels / class | total labels | macro-F1 | accuracy |
+|---|---|---|---|
+| 5 | 50 | 0.791 | 0.802 |
+| 20 | 200 | 0.874 | 0.884 |
+| 50 | 500 | 0.900 | 0.909 |
+| full (80%) | 1,600 | 0.923 | 0.935 |
+
+→ **50 labels/class reaches ~97% of full-supervision macro-F1 with ~3× fewer labels**; 5 labels/class
+hits 86% with **32× fewer**. That label efficiency is the whole point of foundation-model embeddings.
+
+**Similarity search** (FAISS, no training): **precision@10 = 0.824** vs a 0.103 random-chance baseline
+— an **8× lift**. "Find scenes like this" works straight off the frozen embeddings.
+
+> Multi-modal (Sentinel-1 SAR + Sentinel-2) extraction is implemented and verified (the Clay encoder
+> embeds both — see `make clay-smoke`); the headline numbers above use EuroSAT for a fast, clean,
+> single-label probe. BigEarthNet-MM is the multi-modal scale-up (`--dataset bigearthnet`, large download).
+
 ## Why
 
 Raw satellite pixels are a commodity. The value is the **intelligence layer** on top:

@@ -25,7 +25,7 @@ def full_reference(X, y, seed=42):
     idx = rng.permutation(len(y))
     cut = int(0.8 * len(y))
     tr, te = idx[:cut], idx[cut:]
-    clf = LogisticRegression(max_iter=2000, n_jobs=-1).fit(X[tr], y[tr])
+    clf = LogisticRegression(max_iter=2000).fit(X[tr], y[tr])
     pred = clf.predict(X[te])
     return {"n_train": len(tr),
             "macro_f1": float(f1_score(y[te], pred, average="macro")),
