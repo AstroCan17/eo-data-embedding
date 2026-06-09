@@ -87,17 +87,20 @@ def bigearthnet_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     }
 
 
-def oscd_pairs(root: str = "data/", split: str = "train"):
+def oscd_pairs(root: str = "data/", split: str = "train", download: bool = False):
     """OSCD bitemporal change-detection pairs, bands reordered for Clay.
 
     Returns a list of dicts: {id, t1 (10,H,W), t2 (10,H,W), mask (H,W) 0/1}. Raw pixels.
     OSCD images are full Sentinel-2 scenes of varying size (tiled to 256 in phase5).
+
+    `root` can point to an external/NAS mount holding the (already extracted) OSCD dataset;
+    keep `download=False` to read it in place without writing to local disk.
     """
     import torch
     from torchgeo.datasets import OSCD
     from . import clay_metadata as M
 
-    ds = OSCD(root=root, split=split, bands=OSCD.all_bands, download=True)
+    ds = OSCD(root=root, split=split, bands=OSCD.all_bands, download=download)
     pairs = []
     for i in range(len(ds)):
         s = ds[i]

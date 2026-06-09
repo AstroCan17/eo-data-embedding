@@ -27,8 +27,9 @@ def _encode_chunked(embedder, tiles, batch=16):
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--root", default="data/")
+    ap.add_argument("--root", default="data/", help="OSCD dir (can be an external/NAS mount, e.g. /datasets/oscd)")
     ap.add_argument("--split", default="train")
+    ap.add_argument("--download", action="store_true", help="let TorchGeo download OSCD into --root")
     ap.add_argument("--checkpoint", default=None)
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--frac", type=float, default=0.05, help="changed-pixel fraction for a tile to count as changed")
@@ -39,7 +40,7 @@ def main() -> int:
     from geo_embed_eo import data, change
 
     print(f"[change] loading OSCD ({args.split}) ...")
-    pairs = data.oscd_pairs(root=args.root, split=args.split)
+    pairs = data.oscd_pairs(root=args.root, split=args.split, download=args.download)
     embedder = load_embedder("clay", modality="s2", checkpoint=args.checkpoint, device=args.device)
 
     scores, gts = [], []

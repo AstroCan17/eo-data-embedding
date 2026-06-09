@@ -16,6 +16,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      - ${DATASETS_DIR:-./data}:/datasets   # external/NAS datasets (e.g. Synology) -> /datasets
       - hf-cache:/root/.cache/huggingface
       - torch-cache:/root/.cache/torch
     deploy:
@@ -37,6 +38,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      - ${DATASETS_DIR:-./data}:/datasets   # external/NAS datasets (e.g. Synology) -> /datasets
       - hf-cache:/root/.cache/huggingface
       - torch-cache:/root/.cache/torch
     stdin_open: true
