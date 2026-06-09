@@ -60,7 +60,9 @@ class ClayEmbedder:
     """
 
     def __init__(self, checkpoint: str | None = None, modality: str = "s2",
-                 device: str = "cuda", image_size: int | None = None):
+                 device: str = "cuda", image_size: int | None = None,
+                 metadata_path: str | None = None):
+        import os
         import torch
         from . import clay_metadata as M
 
@@ -68,9 +70,23 @@ class ClayEmbedder:
             from claymodel.module import ClayMAEModule
         except ImportError as e:
             raise ImportError(
-                "claymodel not installed. On the GPU host: `pip install claymodel` and fetch "
-                "clay-v1.5.ckpt from HuggingFace `made-with-clay/Clay`."
+                "claymodel not installed. Install Clay from GitHub "
+                "(`pip install git+https://github.com/Clay-foundation/model.git`) — the PyPI "
+                "wheel is mis-packaged. Fetch clay-v1.5.ckpt from HuggingFace `made-with-clay/Clay`."
             ) from e
+
+        # Clay's module opens `configs/metadata.yaml` relative to CWD by default; pass an explicit
+        # path so it works from anywhere. Search common locations if not given.
+        candidates = [metadata_path, os.environ.get("CLAY_METADATA"),
+                      "configs/clay/metadata.yaml", "/opt/clay/metadata.yaml", "configs/metadata.yaml"]
+        metadata_path = next((p for p in candidates if p and os.path.exists(p)), None)
+        if metadata_path is None:
+            raise FileNotFoundError(
+                "Clay metadata.yaml not found. Download it once:\n"
+                "  curl -sSL https://raw.githubusercontent.com/Clay-foundation/model/main/"
+                "configs/metadata.yaml -o configs/clay/metadata.yaml\n"
+                "or set CLAY_METADATA / pass metadata_path."
+            )
 
         self.M = M
         self.modality = modality
@@ -84,7 +100,7 @@ class ClayEmbedder:
         self._gsd = float(spec["gsd"])
 
         self.model = ClayMAEModule.load_from_checkpoint(
-            checkpoint or M.CLAY_CHECKPOINT, map_location=device
+            checkpoint or M.CLAY_CHECKPOINT, map_location=device, metadata_path=metadata_path
         )
         self.model.eval().to(device)
         for p in self.model.parameters():

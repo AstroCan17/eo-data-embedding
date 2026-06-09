@@ -1,0 +1,1 @@
+# Clay metadata.yaml is fetched at runtime/build (not vendored) — see Dockerfile / ClayEmbedder.

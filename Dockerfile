@@ -38,6 +38,12 @@ RUN python -m pip install "git+https://github.com/Clay-foundation/model.git" && 
     ( python -c "import torch,sys; sys.exit(0 if torch.version.cuda else 1)" || \
       python -m pip install --force-reinstall torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121 )
 
+# Clay's module reads configs/metadata.yaml (band wavelengths/means/stds). It isn't shipped in
+# the package, so fetch it to a fixed path; ClayEmbedder looks here via CLAY_METADATA search.
+RUN mkdir -p /opt/clay && \
+    curl -sSL https://raw.githubusercontent.com/Clay-foundation/model/main/configs/metadata.yaml \
+        -o /opt/clay/metadata.yaml
+
 COPY pyproject.toml ./
 COPY src ./src
 RUN python -m pip install -e .

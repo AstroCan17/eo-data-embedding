@@ -20,8 +20,10 @@ artifacts/*
 # Model weights
 *.pt
 *.pth
+*.ckpt
 *.safetensors
 checkpoints/
+v1.5/
 
 # Env / secrets
 .env
@@ -29,3 +31,6 @@ checkpoints/
 
 # OS
 .DS_Store
+
+# Clay metadata (fetched, not vendored)
+configs/clay/metadata.yaml
