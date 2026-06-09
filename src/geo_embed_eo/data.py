@@ -97,7 +97,7 @@ def oscd_pairs(root: str = "data/", split: str = "train"):
     from torchgeo.datasets import OSCD
     from . import clay_metadata as M
 
-    ds = OSCD(root=root, split=split, bands="all", download=True)
+    ds = OSCD(root=root, split=split, bands=OSCD.all_bands, download=True)
     pairs = []
     for i in range(len(ds)):
         s = ds[i]
