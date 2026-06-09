@@ -9,10 +9,12 @@
 #   make shell         drop into a shell in the GPU dev container
 #   make shell-cpu     shell in the CPU dev container (laptops without nvidia)
 #   make gpu-check      verify torch sees the GPU inside the container
+#   make test          run unit tests (pytest)  ·  make lint / make fmt  (ruff)
 
 COMPOSE ?= docker compose
 
-.PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract crossmodal app gpu-check clean
+.PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract crossmodal app gpu-check \
+        test lint fmt clean
 
 build:
 	$(COMPOSE) build dev
@@ -46,6 +48,17 @@ app:
 
 gpu-check:
 	$(COMPOSE) run --rm dev python -c "import torch; print('cuda:', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else '-')"
+
+test:
+	pytest
+
+lint:
+	ruff check .
+	ruff format --check .
+
+fmt:
+	ruff format .
+	ruff check --fix .
 
 clean:
 	$(COMPOSE) down -v

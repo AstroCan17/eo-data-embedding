@@ -1,24 +1,47 @@
-# Lightweight CPU image — for the Phase-4 Gradio demo and CPU-only smoke runs.
-# No CUDA; pulls the CPU torch wheel. Much smaller than the GPU image.
-FROM python:3.11-slim
+# Lightweight CPU image for the Phase-4 Gradio demo / CPU smoke runs.
+# Multi-stage: the builder compiles wheels (needs a C toolchain); the runtime stays slim,
+# runs as a non-root user, and has a HEALTHCHECK on the Gradio port.
 
-ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1 \
-    HF_HOME=/root/.cache/huggingface
+# ---- builder ----
+FROM python:3.11-slim AS builder
 
+ENV PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        libgl1 libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# CPU torch + torchvision from the same index (matched ABI), then the rest.
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
+    pip install -r requirements.txt
 
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 COPY src ./src
 RUN pip install -e .
 
+# ---- runtime ----
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/opt/venv/bin:$PATH" \
+    HF_HOME=/home/app/.cache/huggingface
+
+# Runtime libs for rasterio/opencv + curl for the healthcheck; create a non-root user.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgl1 libglib2.0-0 curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -u 1000 app
+
+COPY --from=builder /opt/venv /opt/venv
+WORKDIR /app
 COPY . .
 
+USER app
 EXPOSE 7860
+HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=3 \
+    CMD curl -fsS http://localhost:7860/ || exit 1
 CMD ["python", "scripts/phase4_app.py"]

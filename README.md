@@ -157,6 +157,18 @@ Makefile            # make build | smoke | extract | app | shell
 artifacts/          # embeddings + indexes (gitignored)
 ```
 
+## Development
+
+```bash
+pip install -e ".[dev,test]"   # or: make build && make shell
+make test                      # pytest (CPU, no downloads)
+make lint                      # ruff check + format --check
+pre-commit install             # run the same gates on every commit
+```
+
+CI (GitHub Actions) runs ruff + pytest and builds the CPU image on every push.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full dev setup and the phase ↔ make-target map.
+
 ## Background research
 
 Before building, read the decision records in [`research/`](research/) — especially
@@ -165,4 +177,4 @@ Before building, read the decision records in [`research/`](research/) — espec
 
 ## License
 
-MIT (code). Datasets and pretrained weights under their own licenses.
+[MIT](LICENSE) (code). Datasets and pretrained weights under their own licenses.
