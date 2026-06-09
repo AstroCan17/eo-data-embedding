@@ -1,0 +1,30 @@
+# Default configuration for geo-embed-eo
+
+model:
+  name: clay            # clay | prithvi | timm-vit (sanity/baseline)
+  timm_backbone: vit_small_patch16_224   # used by phase0 sanity + CNN-vs baseline
+  device: cuda          # cuda | cpu
+  precision: fp32       # P40 is Pascal — keep fp32 (fp16 is slow)
+
+data:
+  dataset: bigearthnet  # eurosat | bigearthnet | oscd
+  root: data/
+  modalities: [s2, s1]  # optical + SAR
+  image_size: 224
+  subset_size: 4000     # keep small — embed a few thousand patches, not the whole set
+
+embed:
+  batch_size: 64
+  store_path: artifacts/embeddings.parquet
+
+search:
+  index_path: artifacts/index.faiss
+  top_k: 12
+
+probe:
+  shots: [5, 20, 50]    # labels per class for the few-shot curve
+  seed: 42
+
+change:
+  dataset: oscd
+  threshold: auto       # auto | float
