@@ -44,13 +44,21 @@ pip install -r requirements.txt
 # 2. Phase 0 — sanity: embed a sample through a ViT backbone, assert shape (CPU-friendly)
 python scripts/phase0_sanity.py            # synthetic tensor, runs anywhere
 python scripts/phase0_sanity.py --eurosat  # downloads one real EuroSAT sample via TorchGeo
+
+# 3. Phase 0 — smoke (green-light gate): full pipeline on a stand-in encoder
+python scripts/phase0_smoke.py             # embed -> parquet -> FAISS -> few-shot probe
 ```
+
+The smoke test is the gate to Phase 1: it exercises every downstream code path with a cheap
+stand-in encoder, so Phase 1 only swaps in the real foundation model. See
+[`research/03-phase0-decisions.md`](research/03-phase0-decisions.md).
 
 ## Phases
 
 | Phase | Script | What | Compute |
 |---|---|---|---|
 | 0 — Sanity | `scripts/phase0_sanity.py` | One image → embedding, assert shape | CPU / Colab |
+| 0 — Smoke (gate) | `scripts/phase0_smoke.py` | Full pipeline on a stand-in encoder: embed → store → FAISS → probe | CPU / Colab |
 | 1 — Extract | `scripts/phase1_extract.py` | BigEarthNet-MM S1+S2 → `artifacts/embeddings.parquet` | **P40 (fp32)** |
 | 2 — Search | `scripts/phase2_search.py` | FAISS index + top-N retrieval | Colab T4 |
 | 3 — Probe | `scripts/phase3_probe.py` | Few-shot linear probe vs CNN baseline | **Kaggle 2×T4** |

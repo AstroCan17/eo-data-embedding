@@ -37,6 +37,10 @@ class ViTEmbedder(nn.Module):
         feats = self.model(x)            # (B, D) with num_classes=0 + global pool
         return feats.float().cpu()
 
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        """Canonical interface every phase depends on: images -> (B, D) embeddings."""
+        return self.forward(x)
+
 
 def load_embedder(name: str = "timm-vit", **kw) -> ViTEmbedder:
     """Factory. Phase 1: add 'clay' / 'prithvi' branches returning the same interface."""

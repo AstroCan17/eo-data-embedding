@@ -7,7 +7,7 @@ each phase so the *why* behind every choice is traceable — and defensible in a
 |------|-------|--------|
 | [`01-datasets.md`](01-datasets.md) | Open-source EO datasets: what, why, specs, licenses, phase mapping | ✅ drafted |
 | [`02-foundation-models.md`](02-foundation-models.md) | ViT foundation models (Clay, DOFA, Prithvi, SatMAE) — specs, decision, `encode(x)->(B,D)` interface | ✅ drafted |
-| `03-phase0-decisions.md` | Phase-0 setup decisions & open questions | ⬜ next |
+| [`03-phase0-decisions.md`](03-phase0-decisions.md) | Phase-0 setup decisions & the green-light gate to Phase 1 | ✅ drafted |
 
 ## Principle
 
