@@ -32,8 +32,8 @@ services:
   dev-cpu:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: geo-embed-eo:gpu
+      dockerfile: Dockerfile.cpu
+    image: geo-embed-eo:cpu
     working_dir: /app
     volumes:
       - .:/app

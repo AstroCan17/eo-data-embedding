@@ -53,7 +53,7 @@ def _eurosat(n: int, size: int = 224):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--eurosat", action="store_true")
-    ap.add_argument("--n", type=int, default=120)
+    ap.add_argument("--n", type=int, default=330)  # ~66/class over 5 classes → 5/20/50 shots all run
     ap.add_argument("--device", default="cpu")
     args = ap.parse_args()
 
