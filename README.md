@@ -45,6 +45,14 @@ Within-modal retrieval is far stronger; purpose-built models (DOFA-CLIP) train f
 > the clean probe headline; SSL4EO-S12 (streamed S1+S2) gives the cross-modal result above — no 120 GB
 > BigEarthNet download needed.
 
+## Demo
+
+`make app` serves an interactive Gradio search UI (`scripts/phase4_app.py`); `--export` renders a
+static montage. Each row: a query tile → its nearest neighbours in Clay-embedding space
+(green label = same EuroSAT class as the query, red = different):
+
+![similarity search demo](docs/demo_search.png)
+
 ## Why
 
 Raw satellite pixels are a commodity. The value is the **intelligence layer** on top:
