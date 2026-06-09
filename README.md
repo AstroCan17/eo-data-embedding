@@ -27,9 +27,23 @@ hits 86% with **32× fewer**. That label efficiency is the whole point of founda
 **Similarity search** (FAISS, no training): **precision@10 = 0.824** vs a 0.103 random-chance baseline
 — an **8× lift**. "Find scenes like this" works straight off the frozen embeddings.
 
-> Multi-modal (Sentinel-1 SAR + Sentinel-2) extraction is implemented and verified (the Clay encoder
-> embeds both — see `make clay-smoke`); the headline numbers above use EuroSAT for a fast, clean,
-> single-label probe. BigEarthNet-MM is the multi-modal scale-up (`--dataset bigearthnet`, large download).
+**Cross-modal retrieval** — Sentinel-1 SAR ↔ Sentinel-2 optical (SSL4EO-S12, streamed; a SAR tile
+retrieves its own optical tile; test = 120 tiles, chance P@1 = 0.008):
+
+| setup | P@1 | P@5 | median rank |
+|---|---|---|---|
+| frozen Clay embeddings | 0.042 | 0.108 | 32 |
+| + learned linear alignment (180 pairs) | 0.142 | 0.400 | 8 |
+
+Honest finding: Clay's *frozen* embeddings are only **weakly cross-modal** (5× chance) — it has no
+cross-modal training objective, so SAR and optical of the same place don't coincide. A single
+**1024×1024 linear map** learned on 180 pairs lifts SAR→optical retrieval to **17× chance** (median
+rank 32→8): the two modalities are *linearly relatable* in Clay's space without joint training.
+Within-modal retrieval is far stronger; purpose-built models (DOFA-CLIP) train for cross-modal directly.
+
+> The Clay encoder embeds both modalities (`make clay-smoke`). EuroSAT (optical, single-label) gives
+> the clean probe headline; SSL4EO-S12 (streamed S1+S2) gives the cross-modal result above — no 120 GB
+> BigEarthNet download needed.
 
 ## Why
 

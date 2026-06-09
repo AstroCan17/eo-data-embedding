@@ -12,7 +12,7 @@
 
 COMPOSE ?= docker compose
 
-.PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract app gpu-check clean
+.PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract crossmodal app gpu-check clean
 
 build:
 	$(COMPOSE) build dev
@@ -37,6 +37,9 @@ clay-smoke:
 
 extract:
 	$(COMPOSE) run --rm dev python scripts/phase1_extract.py
+
+crossmodal:
+	$(COMPOSE) run --rm dev python scripts/phase6_crossmodal.py --n 300 --checkpoint v1.5/clay-v1.5.ckpt --device cuda
 
 app:
 	$(COMPOSE) up app

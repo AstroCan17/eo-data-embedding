@@ -32,6 +32,15 @@ Kept out of the image until verified (the loader is a research package). Code: `
 - S1 here is **GRD** (SSL4EO) vs Clay's **RTC** stats — small dB offset, documented (same as Phase 1).
 - Streaming pulls shards on the fly; `--n` bounds how many samples are fetched.
 
-## Status
-Code prepared and committed; **not yet run** (needs the dependency above). Run together with the
-user. This is the multi-modal headline that sidesteps the BigEarthNet size wall.
+## Result (300 tiles, P40)
+Verified end to end. Input ranges checked sane (S2 mean ≈ 1865 DN, S1 mean ≈ −15.7 dB — match Clay).
+
+| setup | P@1 | P@5 | median rank |
+|---|---|---|---|
+| frozen Clay embeddings | 0.042 | 0.108 | 32 |
+| + learned 1024×1024 alignment (180 pairs) | 0.142 | 0.400 | 8 |
+
+test = 120 tiles, chance P@1 = 0.008. **Frozen Clay is only weakly cross-modal (5× chance)** — no
+cross-modal objective — but a single linear map lifts SAR→optical retrieval to **17× chance**. The
+loader (`ssl4eos12_dataset`) is baked into the GPU image (cloned to `/opt/ssl4eos12` on PYTHONPATH),
+so `make build` → no manual install. Run: `scripts/phase6_crossmodal.py`.
