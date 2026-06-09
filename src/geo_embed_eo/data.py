@@ -87,6 +87,41 @@ def bigearthnet_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     }
 
 
+def ssl4eo_crossmodal(n: int = 1000, split: str = "val", device_batch: int = 8):
+    """Stream N aligned Sentinel-1 (SAR) + Sentinel-2 (optical) tiles from SSL4EO-S12 v1.1.
+
+    Uses the official webdataset streaming loader — only the first ~N samples are pulled, NOT the
+    whole dataset. Returns dict: s2 (N,10,H,W), s1 (N,2,H,W), ids — paired by location for
+    cross-modal retrieval. Takes time index 0 of the 4 timestamps; bands reordered for Clay.
+
+    Requires (install on the GPU host, see research/05-crossmodal.md):
+        pip install webdataset
+        pip install "git+https://github.com/DLR-MF-DAS/SSL4EO-S12-v1.1.git"   # provides ssl4eos12_dataset
+
+    VERIFY-AT-RUNTIME: batch key names ("S2L2A"/"S1GRD") and the 12-band S2 order
+    (assumed [B01,B02,B03,B04,B05,B06,B07,B08,B8A,B09,B11,B12] like BigEarthNet).
+    """
+    import torch
+    from ssl4eos12_dataset import build_ssl4eos12_dataset
+    from . import clay_metadata as M
+
+    ds = build_ssl4eos12_dataset(
+        path="https://huggingface.co/datasets/embed2scale/SSL4EO-S12-v1.1/resolve/main/",
+        modalities=["S2L2A", "S1GRD"], split=split, batch_size=device_batch,
+    )
+    s2, s1 = [], []
+    for batch in ds:
+        b2 = batch["S2L2A"][:, 0].float()       # (B, 12, H, W) — time index 0
+        b1 = batch["S1GRD"][:, 0].float()       # (B, 2, H, W)
+        for i in range(b2.shape[0]):
+            s2.append(b2[i][M.BEN_S2_TO_CLAY])  # (10, H, W)
+            s1.append(b1[i][M.BEN_S1_TO_CLAY])  # (2, H, W)
+        if len(s2) >= n:
+            break
+    s2, s1 = s2[:n], s1[:n]
+    return {"s2": torch.stack(s2), "s1": torch.stack(s1), "ids": list(range(len(s2)))}
+
+
 def oscd_pairs(root: str = "data/", split: str = "train", download: bool = False):
     """OSCD bitemporal change-detection pairs, bands reordered for Clay.
 

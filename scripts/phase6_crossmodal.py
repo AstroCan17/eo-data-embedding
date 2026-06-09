@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+"""Phase 6 — cross-modal retrieval (proves SAR and optical share one embedding space).
+
+Stream N aligned Sentinel-1 (SAR) + Sentinel-2 (optical) tiles from SSL4EO-S12, embed each
+modality SEPARATELY with frozen Clay, then ask: does a SAR embedding retrieve its OWN optical
+tile as nearest among all optical tiles? High precision@1 = Clay maps both modalities of the same
+place close together — multi-modal fusion, quantified, with NO labels.
+
+    python scripts/phase6_crossmodal.py --n 1000 --checkpoint v1.5/clay-v1.5.ckpt --device cuda
+
+Needs: pip install webdataset + the SSL4EO-S12 loader (see research/05-crossmodal.md).
+"""
+from __future__ import annotations
+
+import argparse
+import sys
+
+import numpy as np
+
+
+def _embed(embedder, chips, batch=32):
+    out = []
+    for i in range(0, len(chips), batch):
+        out.append(embedder.encode(chips[i:i + batch]).numpy())
+    return np.vstack(out).astype("float32")
+
+
+def _norm(X):
+    return X / (np.linalg.norm(X, axis=1, keepdims=True) + 1e-8)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--n", type=int, default=1000)
+    ap.add_argument("--split", default="val")
+    ap.add_argument("--checkpoint", default=None)
+    ap.add_argument("--device", default="cuda")
+    ap.add_argument("--out", default="artifacts/crossmodal_results.md")
+    args = ap.parse_args()
+
+    from geo_embed_eo.embed import load_embedder
+    from geo_embed_eo import data
+
+    print(f"[xmodal] streaming {args.n} paired S1+S2 tiles from SSL4EO-S12 ...")
+    ds = data.ssl4eo_crossmodal(n=args.n, split=args.split)
+    n = len(ds["ids"])
+
+    e2 = _norm(_embed(load_embedder("clay", modality="s2", checkpoint=args.checkpoint, device=args.device), ds["s2"]))
+    e1 = _norm(_embed(load_embedder("clay", modality="s1", checkpoint=args.checkpoint, device=args.device), ds["s1"]))
+    print(f"[xmodal] embedded {n} S2 + {n} S1 tiles")
+
+    # SAR query -> rank of its own optical tile among all optical tiles
+    sims = e1 @ e2.T                                  # (n, n) cosine similarity
+    ranks = (sims >= sims[np.arange(n), np.arange(n)][:, None]).sum(axis=1)  # 1 = perfect
+    p_at_1 = float((ranks == 1).mean())
+    p_at_5 = float((ranks <= 5).mean())
+    median_rank = float(np.median(ranks))
+    # symmetric direction (optical -> SAR)
+    sims_t = e2 @ e1.T
+    ranks_t = (sims_t >= sims_t[np.arange(n), np.arange(n)][:, None]).sum(axis=1)
+    p1_t = float((ranks_t == 1).mean())
+
+    print(f"[xmodal] SAR→optical: P@1={p_at_1:.3f} P@5={p_at_5:.3f} median_rank={median_rank:.0f} "
+          f"(chance P@1={1/n:.4f}) | optical→SAR P@1={p1_t:.3f}")
+
+    lines = ["# Cross-modal retrieval — frozen Clay embeddings (SSL4EO-S12)", "",
+             f"{n} locations, each with paired Sentinel-1 (SAR) + Sentinel-2 (optical) tiles, "
+             f"embedded separately with frozen Clay. Retrieval across modalities, zero training.", "",
+             "| direction | P@1 | P@5 | median rank |", "|---|---|---|---|",
+             f"| SAR → optical | {p_at_1:.3f} | {p_at_5:.3f} | {median_rank:.0f} |",
+             f"| optical → SAR | {p1_t:.3f} | – | – |", "",
+             f"Random-chance P@1 ≈ {1/n:.4f} (1 of {n}). A SAR tile retrieving its own optical tile "
+             f"far above chance shows Clay embeds **both modalities of the same place into one shared "
+             f"space** — the core multi-modal claim, measured."]
+    from pathlib import Path
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.out).write_text("\n".join(lines) + "\n")
+    print(f"[xmodal] wrote {args.out} ✅")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
