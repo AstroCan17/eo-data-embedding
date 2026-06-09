@@ -66,15 +66,22 @@ TorchGeo BigEarthNet `bands="all"` returns **14 channels = 12 S2 + 2 S1**. Assum
 `[B01,B02,B03,B04,B05,B06,B07,B08,B8A,B09,B11,B12]` → Clay's 10 bands are indices
 `[1,2,3,4,5,6,7,8,10,11]`; S1 `[VV,VH]` = channels `[12,13]`. (`BEN_S2_TO_CLAY`, `BEN_S1_TO_CLAY`.)
 
-## 4. Install (GPU host)
+## 4. Install
+
+`claymodel` requires **Python ≥ 3.11**, so the GPU image is Python 3.11 (deadsnakes) and
+**bakes `claymodel` in** — no manual install. Only the checkpoint (weights) is fetched once into
+the bind-mounted repo dir:
 
 ```bash
-pip install claymodel
-# checkpoint from HuggingFace `made-with-clay/Clay`:
+make build                                   # GPU image: py3.11 + torch cu121 + claymodel
+# checkpoint from HuggingFace `made-with-clay/Clay` (run inside the container or on host):
 huggingface-cli download made-with-clay/Clay clay-v1.5.ckpt --local-dir .
+make clay-smoke                              # verify Clay loads + embeds both modalities
+make extract                                 # full BigEarthNet-MM extraction
 ```
-Kept **out of `requirements.txt`** so the Phase-0 Docker build stays green; install it in the
-container/host before Phase 1. Run `make clay-smoke` to verify, then `make extract`.
+
+Kept out of `requirements.txt` so the lightweight **CPU** image stays small; it lives in the GPU
+Dockerfile only.
 
 ## 5. Verify-at-runtime caveats (isolated in code, easy to flip)
 - **`time` / `latlon` shape:** current main = `[B, 2]`; some releases use `[B, 4]` (sin/cos). We pass

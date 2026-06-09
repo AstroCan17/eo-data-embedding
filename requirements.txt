@@ -24,8 +24,9 @@ gradio>=4.0
 pyyaml>=6.0
 tqdm>=4.66
 
-# Foundation models (Phase 1+) — kept OUT of this file so the Phase-0 build stays green.
-# Install on the GPU host/container before `make extract` (see research/04-clay-integration.md):
-#   pip install claymodel
-#   huggingface-cli download made-with-clay/Clay clay-v1.5.ckpt --local-dir .
-# Prithvi (optical fallback): huggingface ibm-nasa-geospatial/Prithvi-EO-2.0-300M
+# Foundation models (Phase 1+):
+#   `claymodel` is baked into the GPU Dockerfile (needs Python >=3.11) — not here, so the
+#   lightweight CPU image stays small. Only the checkpoint must be fetched once:
+#       huggingface-cli download made-with-clay/Clay clay-v1.5.ckpt --local-dir .
+#   Prithvi (optical fallback): huggingface ibm-nasa-geospatial/Prithvi-EO-2.0-300M
+# See research/04-clay-integration.md.
