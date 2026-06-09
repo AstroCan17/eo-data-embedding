@@ -34,24 +34,39 @@ This repo demonstrates that layer end to end.
                                                        [ Docker: inference/demo service ]
 ```
 
-## Quickstart
+## Quickstart (Docker — recommended)
+
+No conda, no local env drift. One image runs every phase; CUDA 12.1 covers both the P40 (Pascal)
+and T4 (Turing). Requires Docker + (for GPU) the NVIDIA Container Toolkit.
 
 ```bash
-# 1. env
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-# 2. Phase 0 — sanity: embed a sample through a ViT backbone, assert shape (CPU-friendly)
-python scripts/phase0_sanity.py            # synthetic tensor, runs anywhere
-python scripts/phase0_sanity.py --eurosat  # downloads one real EuroSAT sample via TorchGeo
-
-# 3. Phase 0 — smoke (green-light gate): full pipeline on a stand-in encoder
-python scripts/phase0_smoke.py             # embed -> parquet -> FAISS -> few-shot probe
+make build        # build the GPU dev image
+make gpu-check    # confirm torch sees the GPU (on an nvidia host)
+make sanity       # Phase-0 sanity (CPU-safe)
+make smoke        # Phase-0 green-light gate: embed -> parquet -> FAISS -> few-shot probe
+make extract      # Phase-1 embedding extraction (needs GPU)
+make app          # Phase-4 Gradio demo on :7860 (lightweight CPU image)
+make shell        # interactive shell in the GPU dev container
 ```
 
-The smoke test is the gate to Phase 1: it exercises every downstream code path with a cheap
-stand-in encoder, so Phase 1 only swaps in the real foundation model. See
-[`research/03-phase0-decisions.md`](research/03-phase0-decisions.md).
+CPU-only laptop? Use `make shell-cpu` / `make sanity` / `make smoke` (no GPU reservation).
+Code, data, artifacts and the HuggingFace/torch caches are bind-mounted, so downloads and outputs
+persist on the host. See [`docker-compose.yml`](docker-compose.yml) and the [`Makefile`](Makefile).
+
+The **smoke** target is the gate to Phase 1: it exercises every downstream code path with a cheap
+stand-in encoder, so Phase 1 only swaps in the real foundation model
+(see [`research/03-phase0-decisions.md`](research/03-phase0-decisions.md)).
+
+<details>
+<summary>Alternative: local venv (e.g. Colab / Kaggle, where CUDA is preinstalled)</summary>
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && pip install -e .
+python scripts/phase0_sanity.py
+python scripts/phase0_smoke.py
+```
+</details>
 
 ## Phases
 
@@ -84,6 +99,10 @@ scripts/            # phaseN runnable entrypoints
 configs/            # yaml config
 research/           # decision records: dataset & model rationale (start here)
 docs/PROJECT_PLAN.md
+Dockerfile          # GPU dev image (pip-only, CUDA 12.1)
+Dockerfile.cpu      # lightweight CPU image (Gradio demo)
+docker-compose.yml  # dev (gpu) / dev-cpu / app services
+Makefile            # make build | smoke | extract | app | shell
 artifacts/          # embeddings + indexes (gitignored)
 ```
 

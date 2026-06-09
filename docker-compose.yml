@@ -1,0 +1,61 @@
+# Container setup for geo-embed-eo — no conda, reproducible across hosts.
+#
+#   dev      GPU service (P40 / Kaggle / any nvidia host) — runs every phase.
+#   dev-cpu  same image, no GPU reservation — for CPU-only laptops / smoke runs.
+#   app      lightweight CPU image — the Phase-4 Gradio demo.
+#
+# Code, data, artifacts and model caches are bind-mounted so edits + downloads
+# persist on the host and survive container restarts.
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: geo-embed-eo:gpu
+    working_dir: /app
+    volumes:
+      - .:/app
+      - hf-cache:/root/.cache/huggingface
+      - torch-cache:/root/.cache/torch
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    stdin_open: true
+    tty: true
+    command: bash
+
+  dev-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: geo-embed-eo:gpu
+    working_dir: /app
+    volumes:
+      - .:/app
+      - hf-cache:/root/.cache/huggingface
+      - torch-cache:/root/.cache/torch
+    stdin_open: true
+    tty: true
+    command: bash
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    image: geo-embed-eo:cpu
+    working_dir: /app
+    ports:
+      - "7860:7860"
+    volumes:
+      - .:/app
+      - hf-cache:/root/.cache/huggingface
+    command: python scripts/phase4_app.py
+
+volumes:
+  hf-cache:
+  torch-cache:

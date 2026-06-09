@@ -1,0 +1,21 @@
+# Keep the build context (and image) small
+.git
+.gitignore
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/
+notebooks/
+data/*
+!data/.gitkeep
+artifacts/*
+!artifacts/.gitkeep
+*.parquet
+*.npy
+*.faiss
+*.pt
+*.pth
+*.safetensors
+*.tif
+*.tiff
+.DS_Store

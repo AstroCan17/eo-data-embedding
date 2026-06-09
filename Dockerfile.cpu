@@ -1,0 +1,24 @@
+# Lightweight CPU image — for the Phase-4 Gradio demo and CPU-only smoke runs.
+# No CUDA; pulls the CPU torch wheel. Much smaller than the GPU image.
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1 \
+    HF_HOME=/root/.cache/huggingface
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY pyproject.toml ./
+COPY src ./src
+RUN pip install -e .
+
+COPY . .
+
+EXPOSE 7860
+CMD ["python", "scripts/phase4_app.py"]
