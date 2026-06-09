@@ -1,5 +1,9 @@
 # geo-embed-eo — Multi-Modal Geospatial Embedding Search & Change Detection
 
+[![CI](https://github.com/cosmicdynamix/geo-embed-eo/actions/workflows/ci.yml/badge.svg)](https://github.com/cosmicdynamix/geo-embed-eo/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 Turn massive Earth-observation archives into **queryable, actionable intelligence** with a
 pretrained **vision-transformer foundation model**. Embed **Sentinel-2 (optical) + Sentinel-1 (SAR)**
 imagery, then do similarity search, few-shot classification, and change detection on the embeddings.

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      # CPU torch wheel keeps CI fast (default Linux torch pulls the ~2GB CUDA build).
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -e ".[dev,test]"
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Unit tests
+        run: pytest
+
+  docker-cpu:
+    needs: lint-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Build smoke for the deployable CPU image (the GPU image + data/GPU phases
+      # are intentionally not run in CI — no GPU or datasets on hosted runners).
+      - name: Build CPU image
+        run: docker build -f Dockerfile.cpu -t geo-embed-eo:cpu .
+      - name: Upload demo artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-search
+          path: docs/demo_search.png
