@@ -84,9 +84,10 @@ Kept out of `requirements.txt` so the lightweight **CPU** image stays small; it 
 Dockerfile only.
 
 ## 5. Verify-at-runtime caveats (isolated in code, easy to flip)
-- **`time` / `latlon` shape:** current main = `[B, 2]`; some releases use `[B, 4]` (sin/cos). We pass
-  **zeros** (location/time-agnostic embeddings — fine for within-dataset similarity + probe). If the
-  installed version expects `[B,4]`, change `ClayEmbedder._datacube`.
+- **`time` / `latlon` shape — RESOLVED:** Clay v1.5 (git main) expects **`[B, 4]`** each
+  (time = week sin/cos + hour sin/cos; latlon = lat sin/cos + lon sin/cos). Passing `[B,2]` makes the
+  metadata encoding 4 dims short (`patches 1024` vs `pos_metadata 1020`). We pass **zeros([B,4])**
+  (time/location-agnostic embeddings — fine for within-dataset similarity + probe).
 - **Encoder path:** we use `model.model.encoder` with a `getattr` fallback to `model.encoder`.
 - **TorchGeo band order:** assert is on channel **count** (14); confirm the S2 ordering for the
   installed TorchGeo version — adjust `BEN_S2_TO_CLAY` if it differs.

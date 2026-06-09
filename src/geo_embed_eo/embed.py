@@ -112,8 +112,10 @@ class ClayEmbedder:
         B = cube.shape[0]
         return {
             "pixels": cube.to(self.device),
-            "time": torch.zeros(B, 2, device=self.device),     # VERIFY shape vs installed version
-            "latlon": torch.zeros(B, 2, device=self.device),   # (zeros = location-agnostic embeddings)
+            # Clay v1.5 expects 4 metadata features each: time=(week sin,cos, hour sin,cos),
+            # latlon=(lat sin,cos, lon sin,cos). Zeros = time/location-agnostic embeddings.
+            "time": torch.zeros(B, 4, device=self.device),
+            "latlon": torch.zeros(B, 4, device=self.device),
             "gsd": torch.tensor(self._gsd, device=self.device),
             "waves": self._waves.to(self.device),
         }
