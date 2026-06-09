@@ -13,7 +13,7 @@ Raw satellite pixels are a commodity. The value is the **intelligence layer** on
 *"find scenes like this", "what changed here", "classify with almost no labels"*.
 This repo demonstrates that layer end to end.
 
-| Capability | JD term it proves |
+| Capability | Skill it demonstrates |
 |---|---|
 | ViT foundation-model embeddings | vision transformers, geospatial embeddings |
 | Sentinel-1 SAR + Sentinel-2 optical | multi-modal EO / MSI / SAR |

@@ -1,8 +1,8 @@
 # Portfolio Project Plan — Multi-Modal Geospatial Embedding Search & Change Detection
 
-**Purpose:** Close the transformer/embedding/self-supervised gap for the Planet *Senior Geospatial AI/ML Engineer* application (#012, score 4.6/5). Build a small, working replica of what Planet actually does: turn massive EO archives into queryable, actionable intelligence via a vision-transformer foundation model + embeddings.
+**Purpose:** Demonstrate hands-on capability with the modern geospatial-AI stack — vision transformers, embeddings, and self/semi-supervised learning — for senior geospatial AI/ML roles. Build a small, working replica of what production EO teams do: turn massive EO archives into queryable, actionable intelligence via a vision-transformer foundation model + embeddings.
 
-**Target role JD signals this maps to:** geospatial embeddings · vision transformers · multi-modal EO/MSI/SAR · unsupervised/semi-supervised · big-data/ML at scale · full model lifecycle (curation → analysis → deployment) · perspective geometry (co-registration).
+**Capabilities this demonstrates:** geospatial embeddings · vision transformers · multi-modal EO/MSI/SAR · unsupervised/semi-supervised · big-data/ML at scale · full model lifecycle (curation → analysis → deployment) · perspective geometry (co-registration).
 
 **Scope chosen:** Full + change detection (Phases 0–4 + OSCD stretch).
 **Compute available:** Remote VM **Tesla P40 (24 GB, Pascal — use fp32)**, **Kaggle (2×T4 16 GB, datasets pre-hosted, 30h/wk)**, **Google Colab (T4 free)**.
@@ -11,8 +11,8 @@
 
 ## Core thesis (what we're proving)
 
-> Use a **pretrained ViT geospatial foundation model** (we do NOT train one from scratch — neither does Planet day-to-day) to embed **Sentinel-2 (optical) + Sentinel-1 (SAR)** imagery, then:
-> 1. **Similarity search** (FAISS): "find scenes/objects like this across the archive" — Planet's actionable-intelligence play in miniature.
+> Use a **pretrained ViT geospatial foundation model** (we do NOT train one from scratch — neither do production EO teams day-to-day) to embed **Sentinel-2 (optical) + Sentinel-1 (SAR)** imagery, then:
+> 1. **Similarity search** (FAISS): "find scenes/objects like this across the archive" — the actionable-intelligence play in miniature.
 > 2. **Few-shot linear probe** on frozen embeddings: match a fully-supervised CNN with ~50× fewer labels — proves the embedding/foundation-model value prop + semi-supervised.
 > 3. **Embedding-distance change detection** (OSCD bitemporal pairs): "what changed" — the defense/intelligence use case.
 
@@ -100,8 +100,8 @@ PyTorch + Lightning · **TorchGeo** (datasets + pretrained weights + samplers) �
 ## Deliverables
 1. **GitHub repo** (push to `github.com/AstroCan17`) — clean README, diagram, metrics, Docker, Gradio demo gif.
 2. **CV line (truthful):** "Built a multi-modal (Sentinel-1 SAR + Sentinel-2) geospatial embedding pipeline on a vision-transformer foundation model (Clay); FAISS similarity search + few-shot linear probe matching a CNN baseline with ~50× fewer labels; embedding-distance change detection (OSCD); containerized inference demo."
-3. **Interview stories** (add to `interview-prep/story-bank.md`): why embeddings, why semi-supervised, modality-fusion lessons, fp32-on-Pascal/scale trade-offs.
-4. **Cover-letter bridge** for #012 now backed by real ViT/embedding/semi-supervised evidence.
+3. **Interview talking points:** why embeddings, why semi-supervised, modality-fusion lessons, fp32-on-Pascal/scale trade-offs.
+4. **Application bridge:** ViT / embedding / semi-supervised capability now backed by real, shipped evidence.
 
 ## Scope guardrails (don't)
 - ❌ Train a foundation model from scratch. ❌ Download all of BigEarthNet. ❌ Chase SOTA. ❌ Pascal fp16.
@@ -110,5 +110,5 @@ PyTorch + Lightning · **TorchGeo** (datasets + pretrained weights + samplers) �
 ## Risks / mitigations
 - **Clay/Prithvi input plumbing fiddly** → fall back to TorchGeo pretrained ResNet/ViT weights or Major TOM precomputed embeddings to keep momentum.
 - **SAR normalization differs from optical** → document the preprocessing; it's a legit talking point, not a blocker.
-- **Time** → Phases 0–2 alone already rescue the application; 3–4 + stretch are upside.
+- **Time** → Phases 0–2 alone already deliver a credible portfolio piece; 3–4 + stretch are upside.
 ```

@@ -2,17 +2,17 @@
 
 **Goal of this note.** Decide *which* open Earth-observation datasets we use, *why* each one,
 and *which project phase* it serves. All specs below are verified against primary sources
-(links at the end). This doc is also interview ammunition: every number here is one we can defend.
+(links at the end). Every number here is one we can defend in a technical discussion.
 
 ---
 
 ## 1. Selection criteria
 
-A dataset earns a place in this project only if it helps prove a capability the Planet
-*Senior Geospatial AI/ML Engineer* JD asks for. Concretely, we score candidates on:
+A dataset earns a place in this project only if it helps prove a capability that senior
+geospatial AI/ML roles ask for. Concretely, we score candidates on:
 
 1. **Multi-modal** — does it pair **Sentinel-1 (SAR)** with **Sentinel-2 (optical/MSI)**?
-   The JD explicitly wants EO + MSI + SAR. Single-modality sets are only useful as fast baselines.
+   These roles explicitly want EO + MSI + SAR. Single-modality sets are only useful as fast baselines.
 2. **Label availability** — do we get labels for the **few-shot / semi-supervised** story?
    We need *some* labels to show "50 labels ≈ a CNN trained on thousands".
 3. **Scale** — is there a large unlabeled corpus to populate an embedding index ("ML at scale")?
@@ -64,7 +64,7 @@ specific job. The table in §4 is the result.
   **self/semi-supervised** narrative (it's *the* dataset MoCo/DINO/MAE EO models pretrain on).
 - **How we use it:** Sample a slice for the index; we are not pretraining, just embedding + indexing.
 
-### 2.4 Major TOM — *the shortcut + the "this is exactly Planet's playbook" reference*
+### 2.4 Major TOM — *the shortcut + the "this is exactly the industry playbook" reference*
 - **What:** ESA Φ-lab + CloudFerro effort: the largest ML-ready Sentinel datasets, **plus
   precomputed embedding expansions**. Core sets: `Core-S2L1C`, `Core-S2L2A`, `Core-S1RTC`.
 - **Specs:** Embedding expansions total **169M+ embeddings** from **62 TB** of raw data, produced
@@ -73,7 +73,7 @@ specific job. The table in §4 is the result.
 - **Access:** HuggingFace `Major-TOM/Core-S2L2A`, `Core-S1RTC`, `Core-S2RGB-DINOv2`, etc.
 - **Why we use it:** Two roles. (1) **Fallback/shortcut** — if foundation-model plumbing eats too
   much time, we can pull **precomputed embeddings** and demo FAISS search immediately. (2)
-  **Narrative anchor** — Major TOM *is* the open-world version of what Planet is building
+  **Narrative anchor** — Major TOM *is* the open-world version of what leading EO companies build
   internally (global embeddings for browse/search). Citing it shows we understand the field.
 
 ### 2.5 OSCD (Onera Satellite Change Detection) — *the change-detection stretch*

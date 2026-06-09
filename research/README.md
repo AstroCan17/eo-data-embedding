@@ -12,5 +12,5 @@ each phase so the *why* behind every choice is traceable — and defensible in a
 ## Principle
 
 We **use** pretrained geospatial foundation models and **open** datasets — we do not train a
-foundation model from scratch. Every dataset is chosen to prove one specific JD capability
-(see the project plan in [`../docs/PROJECT_PLAN.md`](../docs/PROJECT_PLAN.md)).
+foundation model from scratch. Every dataset is chosen to prove one specific capability that
+senior geospatial AI/ML roles require (see the plan in [`../docs/PROJECT_PLAN.md`](../docs/PROJECT_PLAN.md)).
