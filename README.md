@@ -124,7 +124,7 @@ python scripts/phase0_smoke.py
 | 2 — Search | `scripts/phase2_search.py` | FAISS retrieval — precision@10 = 0.824 | ✅ |
 | 3 — Probe | `scripts/phase3_probe.py` | Few-shot linear probe — 0.90 macro-F1 @50/class | ✅ |
 | 6 — Cross-modal | `scripts/phase6_crossmodal.py` | SAR↔optical retrieval + learned alignment | ✅ |
-| 4 — App | `scripts/phase4_app.py` | Gradio search UI | ⬜ stub |
+| 4 — App | `scripts/phase4_app.py` | Gradio search UI + montage export (see Demo) | ✅ |
 | 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ⚠️ coded; OSCD source offline/throttled |
 
 See [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) for the full plan, datasets, and rationale.
