@@ -8,6 +8,7 @@ Demonstrates the foundation-model value prop: near-baseline accuracy with ~50x f
     python scripts/phase3_probe.py
     python scripts/phase3_probe.py --store artifacts/embeddings.parquet --modality s2
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,7 +20,7 @@ import numpy as np
 def full_reference(X, y, seed=42):
     """Fully-supervised reference: logistic regression on an 80/20 split."""
     from sklearn.linear_model import LogisticRegression
-    from sklearn.metrics import f1_score, accuracy_score
+    from sklearn.metrics import accuracy_score, f1_score
 
     rng = np.random.default_rng(seed)
     idx = rng.permutation(len(y))
@@ -27,9 +28,11 @@ def full_reference(X, y, seed=42):
     tr, te = idx[:cut], idx[cut:]
     clf = LogisticRegression(max_iter=2000).fit(X[tr], y[tr])
     pred = clf.predict(X[te])
-    return {"n_train": len(tr),
-            "macro_f1": float(f1_score(y[te], pred, average="macro")),
-            "accuracy": float(accuracy_score(y[te], pred))}
+    return {
+        "n_train": len(tr),
+        "macro_f1": float(f1_score(y[te], pred, average="macro")),
+        "accuracy": float(accuracy_score(y[te], pred)),
+    }
 
 
 def main() -> int:
@@ -40,7 +43,7 @@ def main() -> int:
     ap.add_argument("--out", default="artifacts/probe_results.md")
     args = ap.parse_args()
 
-    from geo_embed_eo import store, probe
+    from geo_embed_eo import probe, store
 
     df = store.load_embeddings(args.store)
     df = df[df["modality"] == args.modality]
@@ -62,18 +65,27 @@ def main() -> int:
     print(f"[probe] full:  macro_f1={ref['macro_f1']:.3f} acc={ref['accuracy']:.3f}")
 
     # markdown table
-    lines = ["# Few-shot linear probe — frozen Clay embeddings", "",
-             f"Dataset modality: `{args.modality}` · {len(y)} patches · {len(set(y))} classes · "
-             f"embedding dim {X.shape[1]}", "",
-             "| Labels | n_train | macro-F1 | accuracy |", "|---|---|---|---|"]
+    lines = [
+        "# Few-shot linear probe — frozen Clay embeddings",
+        "",
+        f"Dataset modality: `{args.modality}` · {len(y)} patches · {len(set(y))} classes · "
+        f"embedding dim {X.shape[1]}",
+        "",
+        "| Labels | n_train | macro-F1 | accuracy |",
+        "|---|---|---|---|",
+    ]
     for name, ntr, f1, acc in rows:
         lines.append(f"| {name} | {ntr} | {f1:.3f} | {acc:.3f} |")
     best_few = max((r for r in rows if r[0] != "full (80%)"), key=lambda r: r[2], default=None)
     if best_few:
         pct = 100 * best_few[2] / ref["macro_f1"] if ref["macro_f1"] else 0
-        lines += ["", f"Best few-shot ({best_few[0]}) reaches **{pct:.0f}%** of the full-label "
-                  f"macro-F1 using **{ref['n_train'] // max(best_few[1], 1)}x fewer** labels."]
+        lines += [
+            "",
+            f"Best few-shot ({best_few[0]}) reaches **{pct:.0f}%** of the full-label "
+            f"macro-F1 using **{ref['n_train'] // max(best_few[1], 1)}x fewer** labels.",
+        ]
     from pathlib import Path
+
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n")
     print(f"[probe] wrote {args.out} ✅")

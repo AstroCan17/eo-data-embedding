@@ -3,6 +3,7 @@
 The whole point of decoupling: extract embeddings ONCE (heavy GPU pass), persist them,
 then run search / probe / change-detection cheaply many times.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -15,11 +16,13 @@ def save_embeddings(path: str | Path, ids, vectors: np.ndarray, modality, labels
     """Persist embeddings as parquet. `vectors` is (N, D)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    df = pd.DataFrame({
-        "id": list(ids),
-        "modality": list(modality),
-        "vector": [v.astype(np.float32) for v in vectors],
-    })
+    df = pd.DataFrame(
+        {
+            "id": list(ids),
+            "modality": list(modality),
+            "vector": [v.astype(np.float32) for v in vectors],
+        }
+    )
     if labels is not None:
         df["label"] = list(labels)
     df.to_parquet(path, index=False)

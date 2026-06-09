@@ -9,6 +9,7 @@ see "find scenes like this" working. Two modes:
 
 CPU-only (no Clay needed — it searches embeddings that already exist). Run via `make app`.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,8 +20,9 @@ import numpy as np
 
 
 def _load():
-    from geo_embed_eo import store, search
     from torchgeo.datasets import EuroSAT
+
+    from geo_embed_eo import search, store
 
     df = store.load_embeddings("artifacts/embeddings.parquet")
     df = df[df["modality"] == "s2"].reset_index(drop=True)
@@ -36,8 +38,9 @@ def _load():
 def _rgb(ds, eurosat_idx, size=96):
     """EuroSAT tile -> RGB uint8 thumbnail with a 2–98 percentile stretch."""
     from PIL import Image
+
     img = ds[int(eurosat_idx)]["image"].float().numpy()
-    x = img[[3, 2, 1]]                                   # B04,B03,B02 = R,G,B
+    x = img[[3, 2, 1]]  # B04,B03,B02 = R,G,B
     lo, hi = np.percentile(x, [2, 98])
     x = np.clip((x - lo) / (hi - lo + 1e-6), 0, 1)
     arr = (x.transpose(1, 2, 0) * 255).astype("uint8")
@@ -46,13 +49,15 @@ def _rgb(ds, eurosat_idx, size=96):
 
 def _neighbours(index, X, pos, k):
     from geo_embed_eo import search
-    _, I = search.search(index, X[pos:pos + 1], top_k=k + 1)
+
+    _, I = search.search(index, X[pos : pos + 1], top_k=k + 1)
     return [int(j) for j in I[0] if int(j) != pos][:k]
 
 
 def export(n_examples: int, k: int = 5, out: str = "docs/demo_search.png"):
     """Headless montage: n example queries, each row = [query | top-k neighbours], class-labelled."""
     from PIL import Image, ImageDraw
+
     df, X, ids, labels, index, ds, classes = _load()
     rng = np.random.default_rng(0)
     queries = rng.choice(len(X), size=min(n_examples, len(X)), replace=False)
@@ -80,6 +85,7 @@ def export(n_examples: int, k: int = 5, out: str = "docs/demo_search.png"):
 
 def serve():
     import gradio as gr
+
     df, X, ids, labels, index, ds, classes = _load()
 
     def run(pos, k):
@@ -106,8 +112,13 @@ def serve():
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--export", type=int, default=0, metavar="N",
-                    help="headless: render N example queries to docs/demo_search.png and exit")
+    ap.add_argument(
+        "--export",
+        type=int,
+        default=0,
+        metavar="N",
+        help="headless: render N example queries to docs/demo_search.png and exit",
+    )
     ap.add_argument("--k", type=int, default=5)
     args = ap.parse_args()
     if args.export:

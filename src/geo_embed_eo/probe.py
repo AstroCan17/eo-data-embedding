@@ -4,6 +4,7 @@ Demonstrates the foundation-model value prop: train a linear classifier on top o
 frozen embeddings with very few labels per class and compare against a fully-supervised
 baseline. The headline result is the few-shot vs full-label metric table.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -24,7 +25,7 @@ def few_shot_split(labels: np.ndarray, shots: int, seed: int = 42):
 def linear_probe(X: np.ndarray, y: np.ndarray, shots: int, seed: int = 42) -> dict:
     """Fit a logistic-regression probe with `shots` labels/class; report macro-F1."""
     from sklearn.linear_model import LogisticRegression
-    from sklearn.metrics import f1_score, accuracy_score
+    from sklearn.metrics import accuracy_score, f1_score
 
     tr, te = few_shot_split(y, shots, seed)
     clf = LogisticRegression(max_iter=2000)

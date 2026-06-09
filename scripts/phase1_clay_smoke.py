@@ -8,6 +8,7 @@ tensors, BEFORE spending GPU time on full BigEarthNet extraction. Mirrors the Ph
 
 Needs `claymodel` + clay-v1.5.ckpt (HF `made-with-clay/Clay`). See research/04-clay-integration.md.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,16 +23,16 @@ def main() -> int:
     ap.add_argument("--device", default="cuda")
     args = ap.parse_args()
 
-    from geo_embed_eo.embed import load_embedder
     from geo_embed_eo import clay_metadata as M
+    from geo_embed_eo.embed import load_embedder
 
     for modality, n_bands in (("s2", len(M.S2_BANDS)), ("s1", len(M.S1_BANDS))):
         x = torch.rand(2, n_bands, M.CLAY_IMAGE_SIZE, M.CLAY_IMAGE_SIZE)
-        embedder = load_embedder("clay", modality=modality,
-                                 checkpoint=args.checkpoint, device=args.device)
+        embedder = load_embedder("clay", modality=modality, checkpoint=args.checkpoint, device=args.device)
         emb = embedder.encode(x)
-        assert emb.shape == (2, M.CLAY_EMBED_DIM) and torch.isfinite(emb).all(), \
+        assert emb.shape == (2, M.CLAY_EMBED_DIM) and torch.isfinite(emb).all(), (
             f"{modality}: unexpected embedding {tuple(emb.shape)}"
+        )
         print(f"[clay-smoke] {modality.upper()} ({n_bands} bands) -> {tuple(emb.shape)} ✅")
         del embedder
 

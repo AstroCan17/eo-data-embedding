@@ -2,6 +2,7 @@
 
 Phase 0 can run fully synthetic (no download). Phase 1+ pulls real EO patches.
 """
+
 from __future__ import annotations
 
 import torch
@@ -31,6 +32,7 @@ def eurosat_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     import numpy as np
     import torch
     from torchgeo.datasets import EuroSAT
+
     from . import clay_metadata as M
 
     ds = EuroSAT(root=root, split="train", bands=EuroSAT.all_band_names, download=True)
@@ -40,9 +42,9 @@ def eurosat_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     s2, labels = [], []
     for i in idx:
         s = ds[int(i)]
-        img = s["image"].float()                      # (13, H, W)
+        img = s["image"].float()  # (13, H, W)
         assert img.shape[0] == 13, f"expected 13 EuroSAT bands, got {img.shape[0]}"
-        s2.append(img[M.EUROSAT_S2_TO_CLAY])           # (10, H, W)
+        s2.append(img[M.EUROSAT_S2_TO_CLAY])  # (10, H, W)
         labels.append(int(s["label"]))
     return {"s2": torch.stack(s2), "labels": np.array(labels), "ids": idx.astype(int)}
 
@@ -64,6 +66,7 @@ def bigearthnet_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     import numpy as np
     import torch
     from torchgeo.datasets import BigEarthNet
+
     from . import clay_metadata as M
 
     ds = BigEarthNet(root=root, split="train", bands="all", num_classes=19, download=True)
@@ -73,9 +76,9 @@ def bigearthnet_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     s2, s1, labels = [], [], []
     for i in idx:
         s = ds[int(i)]
-        img = s["image"].float()                 # (14, H, W) = 12 S2 + 2 S1
+        img = s["image"].float()  # (14, H, W) = 12 S2 + 2 S1
         assert img.shape[0] == 14, f"expected 14 BEN channels, got {img.shape[0]}"
-        s2.append(img[M.BEN_S2_TO_CLAY])          # (10, H, W)
+        s2.append(img[M.BEN_S2_TO_CLAY])  # (10, H, W)
         s1.append(img[[12 + j for j in M.BEN_S1_TO_CLAY]])  # (2, H, W)
         labels.append(int(torch.as_tensor(s["label"]).argmax()))
 
@@ -103,16 +106,19 @@ def ssl4eo_crossmodal(n: int = 1000, split: str = "val", device_batch: int = 8):
     """
     import torch
     from ssl4eos12_dataset import build_ssl4eos12_dataset
+
     from . import clay_metadata as M
 
     ds = build_ssl4eos12_dataset(
         path="https://huggingface.co/datasets/embed2scale/SSL4EO-S12-v1.1/resolve/main/",
-        modalities=["S2L2A", "S1GRD"], split=split, batch_size=device_batch,
+        modalities=["S2L2A", "S1GRD"],
+        split=split,
+        batch_size=device_batch,
     )
     s2, s1 = [], []
     for batch in ds:
-        b2 = batch["S2L2A"][:, 0].float()       # (B, 12, H, W) — time index 0
-        b1 = batch["S1GRD"][:, 0].float()       # (B, 2, H, W)
+        b2 = batch["S2L2A"][:, 0].float()  # (B, 12, H, W) — time index 0
+        b1 = batch["S1GRD"][:, 0].float()  # (B, 2, H, W)
         for i in range(b2.shape[0]):
             s2.append(b2[i][M.BEN_S2_TO_CLAY])  # (10, H, W)
             s1.append(b1[i][M.BEN_S1_TO_CLAY])  # (2, H, W)
@@ -133,13 +139,14 @@ def oscd_pairs(root: str = "data/", split: str = "train", download: bool = False
     """
     import torch
     from torchgeo.datasets import OSCD
+
     from . import clay_metadata as M
 
     ds = OSCD(root=root, split=split, bands=OSCD.all_bands, download=download)
     pairs = []
     for i in range(len(ds)):
         s = ds[i]
-        img = s["image"].float()                       # (2, 13, H, W) or (26, H, W)
+        img = s["image"].float()  # (2, 13, H, W) or (26, H, W)
         if img.ndim == 4:
             t1_all, t2_all = img[0], img[1]
         else:
@@ -147,11 +154,13 @@ def oscd_pairs(root: str = "data/", split: str = "train", download: bool = False
             t1_all, t2_all = img[:c], img[c:]
         assert t1_all.shape[0] == 13, f"expected 13 OSCD bands, got {t1_all.shape[0]}"
         mask = torch.as_tensor(s["mask"]).long()
-        mask = (mask > 0).long()                       # 0 = no change, 1 = change
-        pairs.append({
-            "id": i,
-            "t1": t1_all[M.OSCD_S2_TO_CLAY],
-            "t2": t2_all[M.OSCD_S2_TO_CLAY],
-            "mask": mask,
-        })
+        mask = (mask > 0).long()  # 0 = no change, 1 = change
+        pairs.append(
+            {
+                "id": i,
+                "t1": t1_all[M.OSCD_S2_TO_CLAY],
+                "t2": t2_all[M.OSCD_S2_TO_CLAY],
+                "mask": mask,
+            }
+        )
     return pairs

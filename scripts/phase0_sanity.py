@@ -8,6 +8,7 @@ assert the shape is sane. Runs on CPU with a synthetic tensor by default; pass
     python scripts/phase0_sanity.py
     python scripts/phase0_sanity.py --eurosat
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,8 +24,8 @@ def main() -> int:
     ap.add_argument("--device", default="cpu")
     args = ap.parse_args()
 
-    from geo_embed_eo.embed import load_embedder
     from geo_embed_eo import data
+    from geo_embed_eo.embed import load_embedder
 
     if args.eurosat:
         img, label = data.eurosat_sample()
@@ -41,8 +42,9 @@ def main() -> int:
     emb = embedder(x)
 
     print(f"[sanity] embed_dim={embedder.embed_dim}, output={tuple(emb.shape)}")
-    assert emb.ndim == 2 and emb.shape[0] == x.shape[0] and emb.shape[1] == embedder.embed_dim, \
+    assert emb.ndim == 2 and emb.shape[0] == x.shape[0] and emb.shape[1] == embedder.embed_dim, (
         "unexpected embedding shape"
+    )
     assert torch.isfinite(emb).all(), "non-finite values in embedding"
     print("[sanity] OK ✅  pipeline produces finite embeddings of the expected shape.")
     return 0

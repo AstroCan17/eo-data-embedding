@@ -3,6 +3,7 @@
 Embed each date of a bitemporal pair (ideally on co-registered tiles — perspective
 geometry matters here), then threshold the per-tile embedding distance to flag change.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -35,8 +36,9 @@ def tile_image(img, size: int = 256):
     ph, pw = (size - H % size) % size, (size - W % size) % size
     img = F.pad(img.unsqueeze(0), (0, pw, 0, ph), mode="reflect")[0]
     rows, cols = img.shape[1] // size, img.shape[2] // size
-    tiles = [img[:, r * size:(r + 1) * size, c * size:(c + 1) * size]
-             for r in range(rows) for c in range(cols)]
+    tiles = [
+        img[:, r * size : (r + 1) * size, c * size : (c + 1) * size] for r in range(rows) for c in range(cols)
+    ]
     return torch.stack(tiles)
 
 
@@ -49,6 +51,9 @@ def tile_mask_labels(mask, size: int = 256, frac: float = 0.05):
     ph, pw = (size - H % size) % size, (size - W % size) % size
     m = F.pad(mask.float().unsqueeze(0).unsqueeze(0), (0, pw, 0, ph), value=0.0)[0, 0]
     rows, cols = m.shape[0] // size, m.shape[1] // size
-    labels = [float(m[r * size:(r + 1) * size, c * size:(c + 1) * size].mean()) > frac
-              for r in range(rows) for c in range(cols)]
+    labels = [
+        float(m[r * size : (r + 1) * size, c * size : (c + 1) * size].mean()) > frac
+        for r in range(rows)
+        for c in range(cols)
+    ]
     return torch.tensor(labels).int().numpy()

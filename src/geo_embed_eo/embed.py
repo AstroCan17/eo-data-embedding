@@ -4,6 +4,7 @@ Phase 0 uses a lightweight timm ViT so the pipeline is verifiable on CPU/Colab.
 Phase 1 swaps in a real geospatial foundation model (Clay / Prithvi) — same interface:
 an encoder that maps an image batch (B, C, H, W) -> embeddings (B, D).
 """
+
 from __future__ import annotations
 
 import torch
@@ -17,14 +18,17 @@ class ViTEmbedder(nn.Module):
     backbone; for EO foundation models see `load_clay` / `load_prithvi` (Phase 1).
     """
 
-    def __init__(self, backbone: str = "vit_small_patch16_224", in_chans: int = 3,
-                 pretrained: bool = True, device: str = "cpu"):
+    def __init__(
+        self,
+        backbone: str = "vit_small_patch16_224",
+        in_chans: int = 3,
+        pretrained: bool = True,
+        device: str = "cpu",
+    ):
         super().__init__()
         import timm
 
-        self.model = timm.create_model(
-            backbone, pretrained=pretrained, in_chans=in_chans, num_classes=0
-        )
+        self.model = timm.create_model(backbone, pretrained=pretrained, in_chans=in_chans, num_classes=0)
         self.model.eval().to(device)
         for p in self.model.parameters():
             p.requires_grad_(False)
@@ -34,7 +38,7 @@ class ViTEmbedder(nn.Module):
     @torch.no_grad()
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(self.device)
-        feats = self.model(x)            # (B, D) with num_classes=0 + global pool
+        feats = self.model(x)  # (B, D) with num_classes=0 + global pool
         return feats.float().cpu()
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
@@ -59,11 +63,18 @@ class ClayEmbedder:
     Both are isolated below and easy to flip.
     """
 
-    def __init__(self, checkpoint: str | None = None, modality: str = "s2",
-                 device: str = "cuda", image_size: int | None = None,
-                 metadata_path: str | None = None):
+    def __init__(
+        self,
+        checkpoint: str | None = None,
+        modality: str = "s2",
+        device: str = "cuda",
+        image_size: int | None = None,
+        metadata_path: str | None = None,
+    ):
         import os
+
         import torch
+
         from . import clay_metadata as M
 
         try:
@@ -77,8 +88,13 @@ class ClayEmbedder:
 
         # Clay's module opens `configs/metadata.yaml` relative to CWD by default; pass an explicit
         # path so it works from anywhere. Search common locations if not given.
-        candidates = [metadata_path, os.environ.get("CLAY_METADATA"),
-                      "configs/clay/metadata.yaml", "/opt/clay/metadata.yaml", "configs/metadata.yaml"]
+        candidates = [
+            metadata_path,
+            os.environ.get("CLAY_METADATA"),
+            "configs/clay/metadata.yaml",
+            "/opt/clay/metadata.yaml",
+            "configs/metadata.yaml",
+        ]
         metadata_path = next((p for p in candidates if p and os.path.exists(p)), None)
         if metadata_path is None:
             raise FileNotFoundError(
@@ -105,10 +121,11 @@ class ClayEmbedder:
         self.model.eval().to(device)
         for p in self.model.parameters():
             p.requires_grad_(False)
-        self._encoder = getattr(getattr(self.model, "model", self.model), "encoder")
+        self._encoder = getattr(self.model, "model", self.model).encoder
 
     def _datacube(self, cube):
         import torch
+
         B = cube.shape[0]
         return {
             "pixels": cube.to(self.device),
@@ -127,13 +144,14 @@ class ClayEmbedder:
 
         x = x.float()
         if x.shape[-1] != self.image_size or x.shape[-2] != self.image_size:
-            x = F.interpolate(x, size=(self.image_size, self.image_size),
-                              mode="bilinear", align_corners=False)
+            x = F.interpolate(
+                x, size=(self.image_size, self.image_size), mode="bilinear", align_corners=False
+            )
         x = (x - self._means) / self._stds
         with torch.no_grad():
             out = self._encoder(self._datacube(x))
             patches = out[0] if isinstance(out, (tuple, list)) else out
-            emb = patches[:, 0, :]          # class token at index 0
+            emb = patches[:, 0, :]  # class token at index 0
         return emb.float().cpu()
 
     __call__ = encode

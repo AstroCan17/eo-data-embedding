@@ -1,4 +1,5 @@
 """FAISS similarity search over the embedding store."""
+
 from __future__ import annotations
 
 import numpy as np
