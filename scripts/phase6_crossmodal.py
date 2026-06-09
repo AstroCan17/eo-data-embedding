@@ -49,29 +49,44 @@ def main() -> int:
     e1 = _norm(_embed(load_embedder("clay", modality="s1", checkpoint=args.checkpoint, device=args.device), ds["s1"]))
     print(f"[xmodal] embedded {n} S2 + {n} S1 tiles")
 
-    # SAR query -> rank of its own optical tile among all optical tiles
-    sims = e1 @ e2.T                                  # (n, n) cosine similarity
-    ranks = (sims >= sims[np.arange(n), np.arange(n)][:, None]).sum(axis=1)  # 1 = perfect
-    p_at_1 = float((ranks == 1).mean())
-    p_at_5 = float((ranks <= 5).mean())
-    median_rank = float(np.median(ranks))
-    # symmetric direction (optical -> SAR)
-    sims_t = e2 @ e1.T
-    ranks_t = (sims_t >= sims_t[np.arange(n), np.arange(n)][:, None]).sum(axis=1)
-    p1_t = float((ranks_t == 1).mean())
+    # train/test split — learn a cross-modal alignment on train, evaluate on a held-out test set
+    rng = np.random.default_rng(0)
+    perm = rng.permutation(n)
+    cut = int(0.6 * n)
+    tr, te = perm[:cut], perm[cut:]
+    m = len(te)
+    chance = 1.0 / m
 
-    print(f"[xmodal] SAR→optical: P@1={p_at_1:.3f} P@5={p_at_5:.3f} median_rank={median_rank:.0f} "
-          f"(chance P@1={1/n:.4f}) | optical→SAR P@1={p1_t:.3f}")
+    def retr(q, pool):
+        """P@1, P@5, median rank for query[i] retrieving pool[i] (same location)."""
+        s = q @ pool.T
+        ranks = (s >= s[np.arange(len(q)), np.arange(len(q))][:, None]).sum(axis=1)
+        return float((ranks == 1).mean()), float((ranks <= 5).mean()), float(np.median(ranks))
 
+    raw = retr(e1[te], e2[te])                              # frozen, no alignment
+    W, *_ = np.linalg.lstsq(e1[tr], e2[tr], rcond=None)     # learn SAR-space -> optical-space (D×D)
+    e1a = _norm(e1 @ W)
+    aligned = retr(e1a[te], e2[te])                         # after learned linear alignment
+
+    print(f"[xmodal] test n={m}, chance P@1={chance:.4f}")
+    print(f"[xmodal] frozen   SAR→optical: P@1={raw[0]:.3f} P@5={raw[1]:.3f} median_rank={raw[2]:.0f}")
+    print(f"[xmodal] aligned  SAR→optical: P@1={aligned[0]:.3f} P@5={aligned[1]:.3f} median_rank={aligned[2]:.0f}")
+
+    D = e1.shape[1]
     lines = ["# Cross-modal retrieval — frozen Clay embeddings (SSL4EO-S12)", "",
-             f"{n} locations, each with paired Sentinel-1 (SAR) + Sentinel-2 (optical) tiles, "
-             f"embedded separately with frozen Clay. Retrieval across modalities, zero training.", "",
-             "| direction | P@1 | P@5 | median rank |", "|---|---|---|---|",
-             f"| SAR → optical | {p_at_1:.3f} | {p_at_5:.3f} | {median_rank:.0f} |",
-             f"| optical → SAR | {p1_t:.3f} | – | – |", "",
-             f"Random-chance P@1 ≈ {1/n:.4f} (1 of {n}). A SAR tile retrieving its own optical tile "
-             f"far above chance shows Clay embeds **both modalities of the same place into one shared "
-             f"space** — the core multi-modal claim, measured."]
+             f"{n} locations with paired Sentinel-1 (SAR) + Sentinel-2 (optical) tiles, each embedded "
+             f"separately with frozen Clay. A SAR tile queries the optical pool; the correct hit is its "
+             f"own location. Held-out test set: {m} tiles (chance P@1 = {chance:.4f}).", "",
+             "| setup | P@1 | P@5 | median rank |", "|---|---|---|---|",
+             f"| frozen embeddings | {raw[0]:.3f} | {raw[1]:.3f} | {raw[2]:.0f} |",
+             f"| + learned linear alignment | {aligned[0]:.3f} | {aligned[1]:.3f} | {aligned[2]:.0f} |", "",
+             f"**Finding.** Clay's *frozen* embeddings are only weakly cross-modal "
+             f"(P@1 {raw[0]:.3f} ≈ {raw[0]/chance:.0f}× chance): it has no cross-modal training objective, "
+             f"so SAR and optical of the same place don't coincide in embedding space. A single "
+             f"**{D}×{D} linear alignment** learned on {len(tr)} pairs lifts SAR→optical retrieval to "
+             f"**P@1 {aligned[0]:.3f} ({aligned[0]/chance:.0f}× chance)** — the two modalities are linearly "
+             f"relatable in Clay's space even without joint training. (Honest result: within-modal "
+             f"retrieval is far stronger; true cross-modal models, e.g. DOFA-CLIP, train for this directly.)"]
     from pathlib import Path
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n")
