@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """Phase 3 — few-shot linear probe on frozen Clay embeddings (the headline result).
 
-Reads artifacts/embeddings.parquet, trains a linear probe on the FROZEN embeddings with only a
-few labels per class (5/20/50), and compares against a fully-supervised reference (80/20 split).
-Demonstrates the foundation-model value prop: near-baseline accuracy with ~50x fewer labels.
+Trains a linear probe on the FROZEN embeddings with only a few labels per class (5/20/50) and
+compares against a fully-supervised reference (80/20 split): near-baseline accuracy, far fewer labels.
 
     python scripts/phase3_probe.py
     python scripts/phase3_probe.py --store artifacts/embeddings.parquet --modality s2
@@ -13,8 +12,14 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 import numpy as np
+
+from geo_embed_eo.config import cfg_get, load_config
+from geo_embed_eo.log import get_logger
+
+log = get_logger("probe")
 
 
 def full_reference(X, y, seed=42):
@@ -36,12 +41,16 @@ def full_reference(X, y, seed=42):
 
 
 def main() -> int:
+    cfg = load_config()
     ap = argparse.ArgumentParser()
-    ap.add_argument("--store", default="artifacts/embeddings.parquet")
-    ap.add_argument("--modality", default="s2")
-    ap.add_argument("--shots", type=int, nargs="+", default=[5, 20, 50])
-    ap.add_argument("--out", default="artifacts/probe_results.md")
+    ap.add_argument("--store", default=cfg_get(cfg, "embed.store_path", "artifacts/embeddings.parquet"))
+    ap.add_argument("--modality", default="s2", choices=["s2", "s1"])
+    ap.add_argument("--shots", type=int, nargs="+", default=cfg_get(cfg, "probe.shots", [5, 20, 50]))
+    ap.add_argument("--out", default=cfg_get(cfg, "probe.out", "artifacts/probe_results.md"))
     args = ap.parse_args()
+
+    if not Path(args.store).exists():
+        raise FileNotFoundError(f"embedding store not found: {args.store} (run phase1_extract first)")
 
     from geo_embed_eo import probe, store
 
@@ -49,22 +58,21 @@ def main() -> int:
     df = df[df["modality"] == args.modality]
     X = store.stack_vectors(df)
     y = df["label"].to_numpy()
-    print(f"[probe] {len(y)} {args.modality} embeddings, dim={X.shape[1]}, classes={len(set(y))}")
+    log.info("%d %s embeddings, dim=%d, classes=%d", len(y), args.modality, X.shape[1], len(set(y)))
 
     rows = []
     for shots in args.shots:
         if min(np.bincount(y)) <= shots:
-            print(f"[probe] shots={shots}: skipped (not enough per class)")
+            log.info("shots=%d: skipped (not enough per class)", shots)
             continue
         r = probe.linear_probe(X, y, shots=shots)
         rows.append((f"{shots}/class", r["n_train"], r["macro_f1"], r["accuracy"]))
-        print(f"[probe] shots={shots}: macro_f1={r['macro_f1']:.3f} acc={r['accuracy']:.3f}")
+        log.info("shots=%d: macro_f1=%.3f acc=%.3f", shots, r["macro_f1"], r["accuracy"])
 
     ref = full_reference(X, y)
     rows.append(("full (80%)", ref["n_train"], ref["macro_f1"], ref["accuracy"]))
-    print(f"[probe] full:  macro_f1={ref['macro_f1']:.3f} acc={ref['accuracy']:.3f}")
+    log.info("full:  macro_f1=%.3f acc=%.3f", ref["macro_f1"], ref["accuracy"])
 
-    # markdown table
     lines = [
         "# Few-shot linear probe — frozen Clay embeddings",
         "",
@@ -84,11 +92,10 @@ def main() -> int:
             f"Best few-shot ({best_few[0]}) reaches **{pct:.0f}%** of the full-label "
             f"macro-F1 using **{ref['n_train'] // max(best_few[1], 1)}x fewer** labels.",
         ]
-    from pathlib import Path
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n")
-    print(f"[probe] wrote {args.out} ✅")
+    log.info("wrote %s ✅", args.out)
     return 0
 
 

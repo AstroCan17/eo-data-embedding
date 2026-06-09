@@ -15,8 +15,13 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 import numpy as np
+
+from geo_embed_eo.log import get_logger
+
+log = get_logger("xmodal")
 
 
 def _embed(embedder, chips, batch=32):
@@ -39,10 +44,13 @@ def main() -> int:
     ap.add_argument("--out", default="artifacts/crossmodal_results.md")
     args = ap.parse_args()
 
+    if args.checkpoint is not None and not Path(args.checkpoint).exists():
+        raise FileNotFoundError(f"checkpoint not found: {args.checkpoint}")
+
     from geo_embed_eo import data
     from geo_embed_eo.embed import load_embedder
 
-    print(f"[xmodal] streaming {args.n} paired S1+S2 tiles from SSL4EO-S12 ...")
+    log.info(f"streaming {args.n} paired S1+S2 tiles from SSL4EO-S12 ...")
     ds = data.ssl4eo_crossmodal(n=args.n, split=args.split)
     n = len(ds["ids"])
 
@@ -52,7 +60,7 @@ def main() -> int:
     e1 = _norm(
         _embed(load_embedder("clay", modality="s1", checkpoint=args.checkpoint, device=args.device), ds["s1"])
     )
-    print(f"[xmodal] embedded {n} S2 + {n} S1 tiles")
+    log.info(f"embedded {n} S2 + {n} S1 tiles")
 
     # train/test split — learn a cross-modal alignment on train, evaluate on a held-out test set
     rng = np.random.default_rng(0)
@@ -73,9 +81,9 @@ def main() -> int:
     e1a = _norm(e1 @ W)
     aligned = retr(e1a[te], e2[te])  # after learned linear alignment
 
-    print(f"[xmodal] test n={m}, chance P@1={chance:.4f}")
-    print(f"[xmodal] frozen  SAR→optical: P@1={raw[0]:.3f} P@5={raw[1]:.3f} rank={raw[2]:.0f}")
-    print(f"[xmodal] aligned SAR→optical: P@1={aligned[0]:.3f} P@5={aligned[1]:.3f} rank={aligned[2]:.0f}")
+    log.info(f"test n={m}, chance P@1={chance:.4f}")
+    log.info(f"frozen  SAR→optical: P@1={raw[0]:.3f} P@5={raw[1]:.3f} rank={raw[2]:.0f}")
+    log.info(f"aligned SAR→optical: P@1={aligned[0]:.3f} P@5={aligned[1]:.3f} rank={aligned[2]:.0f}")
 
     D = e1.shape[1]
     lines = [
@@ -98,11 +106,9 @@ def main() -> int:
         f"relatable in Clay's space even without joint training. (Honest result: within-modal "
         f"retrieval is far stronger; true cross-modal models, e.g. DOFA-CLIP, train for this directly.)",
     ]
-    from pathlib import Path
-
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n")
-    print(f"[xmodal] wrote {args.out} ✅")
+    log.info(f"wrote {args.out} ✅")
     return 0
 
 

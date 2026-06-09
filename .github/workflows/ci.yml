@@ -15,8 +15,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      # CPU torch wheel keeps CI fast (default Linux torch pulls the ~2GB CUDA build).
-      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      # CPU torch + torchvision from the same index (matched ABI — avoids the
+      # "operator torchvision::nms does not exist" mismatch; default torchvision is a CUDA build).
+      - run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
       - run: pip install -e ".[dev,test]"
       - name: Lint
         run: |

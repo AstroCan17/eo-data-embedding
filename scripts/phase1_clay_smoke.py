@@ -2,7 +2,7 @@
 """Phase 1 — Clay integration smoke test.
 
 Verify the Clay encoder loads and produces (B, 1024) embeddings for both modalities on synthetic
-tensors, BEFORE spending GPU time on full BigEarthNet extraction. Mirrors the Phase-0 de-risk idea.
+tensors, BEFORE spending GPU time on full extraction. Mirrors the Phase-0 de-risk idea.
 
     python scripts/phase1_clay_smoke.py --checkpoint clay-v1.5.ckpt --device cuda
 
@@ -13,8 +13,13 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 import torch
+
+from geo_embed_eo.log import get_logger
+
+log = get_logger("clay-smoke")
 
 
 def main() -> int:
@@ -23,6 +28,9 @@ def main() -> int:
     ap.add_argument("--device", default="cuda")
     args = ap.parse_args()
 
+    if args.checkpoint is not None and not Path(args.checkpoint).exists():
+        raise FileNotFoundError(f"checkpoint not found: {args.checkpoint}")
+
     from geo_embed_eo import clay_metadata as M
     from geo_embed_eo.embed import load_embedder
 
@@ -30,13 +38,12 @@ def main() -> int:
         x = torch.rand(2, n_bands, M.CLAY_IMAGE_SIZE, M.CLAY_IMAGE_SIZE)
         embedder = load_embedder("clay", modality=modality, checkpoint=args.checkpoint, device=args.device)
         emb = embedder.encode(x)
-        assert emb.shape == (2, M.CLAY_EMBED_DIM) and torch.isfinite(emb).all(), (
-            f"{modality}: unexpected embedding {tuple(emb.shape)}"
-        )
-        print(f"[clay-smoke] {modality.upper()} ({n_bands} bands) -> {tuple(emb.shape)} ✅")
+        if emb.shape != (2, M.CLAY_EMBED_DIM) or not torch.isfinite(emb).all():
+            raise ValueError(f"{modality}: unexpected embedding {tuple(emb.shape)}")
+        log.info(f"{modality.upper()} ({n_bands} bands) -> {tuple(emb.shape)} ✅")
         del embedder
 
-    print("[clay-smoke] OK ✅  Clay loads + embeds both modalities. Ready for full extraction.")
+    log.info("OK ✅  Clay loads + embeds both modalities. Ready for full extraction.")
     return 0
 
 

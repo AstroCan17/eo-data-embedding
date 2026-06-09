@@ -43,7 +43,8 @@ def eurosat_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     for i in idx:
         s = ds[int(i)]
         img = s["image"].float()  # (13, H, W)
-        assert img.shape[0] == 13, f"expected 13 EuroSAT bands, got {img.shape[0]}"
+        if img.shape[0] != 13:
+            raise ValueError(f"expected 13 EuroSAT bands, got {img.shape[0]}")
         s2.append(img[M.EUROSAT_S2_TO_CLAY])  # (10, H, W)
         labels.append(int(s["label"]))
     return {"s2": torch.stack(s2), "labels": np.array(labels), "ids": idx.astype(int)}
@@ -77,7 +78,8 @@ def bigearthnet_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     for i in idx:
         s = ds[int(i)]
         img = s["image"].float()  # (14, H, W) = 12 S2 + 2 S1
-        assert img.shape[0] == 14, f"expected 14 BEN channels, got {img.shape[0]}"
+        if img.shape[0] != 14:
+            raise ValueError(f"expected 14 BEN channels, got {img.shape[0]}")
         s2.append(img[M.BEN_S2_TO_CLAY])  # (10, H, W)
         s1.append(img[[12 + j for j in M.BEN_S1_TO_CLAY]])  # (2, H, W)
         labels.append(int(torch.as_tensor(s["label"]).argmax()))
@@ -152,7 +154,8 @@ def oscd_pairs(root: str = "data/", split: str = "train", download: bool = False
         else:
             c = img.shape[0] // 2
             t1_all, t2_all = img[:c], img[c:]
-        assert t1_all.shape[0] == 13, f"expected 13 OSCD bands, got {t1_all.shape[0]}"
+        if t1_all.shape[0] != 13:
+            raise ValueError(f"expected 13 OSCD bands, got {t1_all.shape[0]}")
         mask = torch.as_tensor(s["mask"]).long()
         mask = (mask > 0).long()  # 0 = no change, 1 = change
         pairs.append(

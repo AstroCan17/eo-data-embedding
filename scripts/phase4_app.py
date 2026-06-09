@@ -18,13 +18,21 @@ from pathlib import Path
 
 import numpy as np
 
+from geo_embed_eo.config import cfg_get, load_config
+from geo_embed_eo.log import get_logger
+
+log = get_logger("app")
+
 
 def _load():
     from torchgeo.datasets import EuroSAT
 
     from geo_embed_eo import search, store
 
-    df = store.load_embeddings("artifacts/embeddings.parquet")
+    store_path = cfg_get(load_config(), "embed.store_path", "artifacts/embeddings.parquet")
+    if not Path(store_path).exists():
+        raise FileNotFoundError(f"embedding store not found: {store_path} (run phase1_extract first)")
+    df = store.load_embeddings(store_path)
     df = df[df["modality"] == "s2"].reset_index(drop=True)
     X = store.stack_vectors(df)
     ids = df["id"].to_numpy()
@@ -80,7 +88,7 @@ def export(n_examples: int, k: int = 5, out: str = "docs/demo_search.png"):
             draw.text((x + 2, y + sz + 2), tag[:14], fill=colour)
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     canvas.save(out)
-    print(f"[app] wrote {out} ({len(queries)} queries × top-{k}) — green label = same class as query ✅")
+    log.info(f"wrote {out} ({len(queries)} queries × top-{k}) — green label = same class as query ✅")
 
 
 def serve():

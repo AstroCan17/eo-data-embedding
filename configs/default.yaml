@@ -1,30 +1,30 @@
-# Default configuration for geo-embed-eo
+# Default configuration for geo-embed-eo.
+# Phase scripts read their argparse *defaults* from here (CLI flags still override).
+# Loaded via geo_embed_eo.config.load_config().
 
 model:
-  name: clay            # clay | prithvi | timm-vit (sanity/baseline)
-  timm_backbone: vit_small_patch16_224   # used by phase0 sanity + CNN-vs baseline
-  device: cuda          # cuda | cpu
-  precision: fp32       # P40 is Pascal — keep fp32 (fp16 is slow)
+  name: clay # clay | prithvi | timm-vit (sanity/baseline)
+  timm_backbone: vit_small_patch16_224 # phase0 sanity + CNN-vs baseline
+  device: cuda # cuda | cpu
+  precision: fp32 # P40 is Pascal — keep fp32 (fp16 is slow)
 
 data:
-  dataset: bigearthnet  # eurosat | bigearthnet | oscd
+  dataset: eurosat # eurosat (fast optical) | bigearthnet (multi-modal, ~120GB)
   root: data/
-  modalities: [s2, s1]  # optical + SAR
-  image_size: 224
-  subset_size: 4000     # keep small — embed a few thousand patches, not the whole set
+  subset_size: 2000 # keep small — embed a few thousand patches, not the whole set
 
 embed:
-  batch_size: 64
+  batch_size: 32
   store_path: artifacts/embeddings.parquet
 
 search:
-  index_path: artifacts/index.faiss
-  top_k: 12
+  top_k: 10
+  out: artifacts/search_results.md
 
 probe:
-  shots: [5, 20, 50]    # labels per class for the few-shot curve
-  seed: 42
+  shots: [5, 20, 50]
+  out: artifacts/probe_results.md
 
 change:
-  dataset: oscd
-  threshold: auto       # auto | float
+  threshold: auto # auto | float
+  frac: 0.05 # changed-pixel fraction for a tile to count as changed

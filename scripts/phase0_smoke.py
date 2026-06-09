@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """Phase 0 — mini end-to-end smoke test (the green-light gate).
 
-Exercises EVERY downstream phase's code path with the cheap stand-in encoder, so that
-Phase 1 only has to swap the encoder. See research/03-phase0-decisions.md § Green-light gate.
+Exercises EVERY downstream phase's code path with the cheap stand-in encoder, so that Phase 1 only
+has to swap the encoder. See research/03-phase0-decisions.md § Green-light gate.
 
 Pipeline proven here:
     data -> encode (B,D) -> parquet store -> FAISS top-k -> few-shot linear probe
@@ -23,6 +23,10 @@ from pathlib import Path
 
 import numpy as np
 import torch
+
+from geo_embed_eo.log import get_logger
+
+log = get_logger("smoke")
 
 
 def _synthetic(n: int, classes: int = 5, size: int = 224):
@@ -66,9 +70,8 @@ def main() -> int:
 
     # --- data ---
     imgs, labels = _eurosat(args.n) if args.eurosat else _synthetic(args.n)
-    print(
-        f"[smoke] dataset: {'EuroSAT' if args.eurosat else 'synthetic'} "
-        f"n={len(labels)} classes={len(set(labels))}"
+    log.info(
+        f"dataset: {'EuroSAT' if args.eurosat else 'synthetic'} n={len(labels)} classes={len(set(labels))}"
     )
 
     # --- encode (B, D) ---
@@ -77,8 +80,9 @@ def main() -> int:
     for i in range(0, len(imgs), 32):
         vecs.append(embedder.encode(imgs[i : i + 32]).numpy())
     X = np.vstack(vecs).astype("float32")
-    assert X.shape == (len(labels), embedder.embed_dim) and np.isfinite(X).all()
-    print(f"[smoke] embeddings: {X.shape}  (Phase-1 code path ✅)")
+    if X.shape != (len(labels), embedder.embed_dim) or not np.isfinite(X).all():
+        raise ValueError(f"bad embeddings: shape={X.shape}")
+    log.info(f"embeddings: {X.shape}  (Phase-1 code path ✅)")
 
     # --- parquet store (Phase 1 path) ---
     with tempfile.TemporaryDirectory() as td:
@@ -91,29 +95,29 @@ def main() -> int:
         )
         df = store.load_embeddings(p)
         X2 = store.stack_vectors(df)
-        assert X2.shape == X.shape
-        print(f"[smoke] parquet round-trip: {p.name} ✅")
+        if X2.shape != X.shape:
+            raise ValueError("parquet round-trip changed shape")
+        log.info(f"parquet round-trip: {p.name} ✅")
 
     # --- FAISS search (Phase 2 path) ---
     index = search.build_index(X)
-    D, I = search.search(index, X[:3], top_k=min(5, len(labels)))
-    assert I.shape[0] == 3 and (I[:, 0] == np.arange(3)).all()  # nearest of self is self
-    print(f"[smoke] FAISS top-k retrieval: {I.shape} ✅")
+    _, I = search.search(index, X[:3], top_k=min(5, len(labels)))
+    if I.shape[0] != 3 or not (I[:, 0] == np.arange(3)).all():  # nearest of self is self
+        raise ValueError("FAISS self-retrieval failed")
+    log.info(f"FAISS top-k retrieval: {I.shape} ✅")
 
     # --- few-shot linear probe (Phase 3 path) ---
-    print("[smoke] few-shot linear probe:")
+    log.info("few-shot linear probe:")
     for shots in (5, 20, 50):
         if min(np.bincount(labels)) <= shots:
-            print(f"          shots={shots}: skipped (not enough per class)")
+            log.info(f"  shots={shots}: skipped (not enough per class)")
             continue
         r = probe.linear_probe(X, labels, shots=shots)
-        assert np.isfinite(r["macro_f1"])
-        print(
-            f"          shots={shots}: macro_f1={r['macro_f1']:.3f} "
-            f"acc={r['accuracy']:.3f} (n_train={r['n_train']}) ✅"
-        )
+        if not np.isfinite(r["macro_f1"]):
+            raise ValueError(f"probe macro_f1 not finite at shots={shots}")
+        log.info(f"  shots={shots}: macro_f1={r['macro_f1']:.3f} acc={r['accuracy']:.3f} ✅")
 
-    print("\n[smoke] OK ✅  all downstream code paths wired. Green light → Phase 1 (swap in Clay).")
+    log.info("OK ✅  all downstream code paths wired. Green light → Phase 1 (swap in Clay).")
     return 0
 
 
