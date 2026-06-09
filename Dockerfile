@@ -30,8 +30,11 @@ RUN python -m pip install --upgrade pip && \
 COPY requirements.txt .
 RUN python -m pip install -r requirements.txt
 
-# Clay foundation model (needs py>=3.11). Install after torch; re-pin cu121 torch if it got clobbered.
-RUN python -m pip install claymodel && \
+# Clay foundation model (needs py>=3.11). The PyPI `claymodel` 1.5.0 wheel is mis-packaged
+# (flat modules with `from src.model import ...` that don't resolve), so install from the
+# official GitHub repo, which ships the proper `claymodel` package. Re-pin cu121 torch if a
+# transitive dep clobbered it.
+RUN python -m pip install "git+https://github.com/Clay-foundation/model.git" && \
     ( python -c "import torch,sys; sys.exit(0 if torch.version.cuda else 1)" || \
       python -m pip install --force-reinstall torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121 )
 
