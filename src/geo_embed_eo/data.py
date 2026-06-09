@@ -87,5 +87,33 @@ def bigearthnet_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     }
 
 
-# Stretch: add oscd_pairs(root) -> list of (img_t1, img_t2, change_mask)
-#   from torchgeo.datasets import OSCD
+def oscd_pairs(root: str = "data/", split: str = "train"):
+    """OSCD bitemporal change-detection pairs, bands reordered for Clay.
+
+    Returns a list of dicts: {id, t1 (10,H,W), t2 (10,H,W), mask (H,W) 0/1}. Raw pixels.
+    OSCD images are full Sentinel-2 scenes of varying size (tiled to 256 in phase5).
+    """
+    import torch
+    from torchgeo.datasets import OSCD
+    from . import clay_metadata as M
+
+    ds = OSCD(root=root, split=split, bands="all", download=True)
+    pairs = []
+    for i in range(len(ds)):
+        s = ds[i]
+        img = s["image"].float()                       # (2, 13, H, W) or (26, H, W)
+        if img.ndim == 4:
+            t1_all, t2_all = img[0], img[1]
+        else:
+            c = img.shape[0] // 2
+            t1_all, t2_all = img[:c], img[c:]
+        assert t1_all.shape[0] == 13, f"expected 13 OSCD bands, got {t1_all.shape[0]}"
+        mask = torch.as_tensor(s["mask"]).long()
+        mask = (mask > 0).long()                       # 0 = no change, 1 = change
+        pairs.append({
+            "id": i,
+            "t1": t1_all[M.OSCD_S2_TO_CLAY],
+            "t2": t2_all[M.OSCD_S2_TO_CLAY],
+            "mask": mask,
+        })
+    return pairs

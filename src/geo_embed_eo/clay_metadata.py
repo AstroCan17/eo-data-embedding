@@ -44,6 +44,9 @@ BEN_S1_TO_CLAY = [0, 1]
 # Clay S2 wants: blue(B02) green(B03) red(B04) re1(B05) re2(B06) re3(B07) nir(B08) nir08(B08A) swir16(B11) swir22(B12)
 EUROSAT_S2_TO_CLAY = [1, 2, 3, 4, 5, 6, 7, 8, 11, 12]
 
+# OSCD (TorchGeo, 13-band) shares the same band order as EuroSAT.
+OSCD_S2_TO_CLAY = EUROSAT_S2_TO_CLAY
+
 CLAY_IMAGE_SIZE = 256          # Clay v1.5 fixed input size
 CLAY_EMBED_DIM = 1024
 CLAY_CHECKPOINT = "clay-v1.5.ckpt"   # weights: HuggingFace `made-with-clay/Clay`
