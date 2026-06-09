@@ -39,6 +39,11 @@ BEN_S2_TO_CLAY = [1, 2, 3, 4, 5, 6, 7, 8, 10, 11]
 # BigEarthNet S1 stack: [VV, VH] -> matches Clay [vv, vh]
 BEN_S1_TO_CLAY = [0, 1]
 
+# EuroSAT (TorchGeo, 13-band MS) channel order:
+#   [B01, B02, B03, B04, B05, B06, B07, B08, B08A, B09, B10, B11, B12]
+# Clay S2 wants: blue(B02) green(B03) red(B04) re1(B05) re2(B06) re3(B07) nir(B08) nir08(B08A) swir16(B11) swir22(B12)
+EUROSAT_S2_TO_CLAY = [1, 2, 3, 4, 5, 6, 7, 8, 11, 12]
+
 CLAY_IMAGE_SIZE = 256          # Clay v1.5 fixed input size
 CLAY_EMBED_DIM = 1024
 CLAY_CHECKPOINT = "clay-v1.5.ckpt"   # weights: HuggingFace `made-with-clay/Clay`

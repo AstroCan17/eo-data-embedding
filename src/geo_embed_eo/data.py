@@ -22,6 +22,31 @@ def synthetic_batch(batch: int = 2, chans: int = 3, size: int = 224) -> torch.Te
     return torch.rand(batch, chans, size, size, generator=g)
 
 
+def eurosat_subset(root: str = "data/", n: int = 2000, seed: int = 42):
+    """EuroSAT subset (Sentinel-2 optical), bands reordered for Clay. ~2 GB download, single-label.
+
+    Returns dict: s2 -> (n, 10, H, W) raw, labels -> (n,) int (10-class), ids -> (n,).
+    No SAR (EuroSAT is optical-only) — fast real-data path for the few-shot probe + retrieval.
+    """
+    import numpy as np
+    import torch
+    from torchgeo.datasets import EuroSAT
+    from . import clay_metadata as M
+
+    ds = EuroSAT(root=root, split="train", bands=EuroSAT.all_band_names, download=True)
+    rng = np.random.default_rng(seed)
+    idx = rng.choice(len(ds), size=min(n, len(ds)), replace=False)
+
+    s2, labels = [], []
+    for i in idx:
+        s = ds[int(i)]
+        img = s["image"].float()                      # (13, H, W)
+        assert img.shape[0] == 13, f"expected 13 EuroSAT bands, got {img.shape[0]}"
+        s2.append(img[M.EUROSAT_S2_TO_CLAY])           # (10, H, W)
+        labels.append(int(s["label"]))
+    return {"s2": torch.stack(s2), "labels": np.array(labels), "ids": idx.astype(int)}
+
+
 def bigearthnet_subset(root: str = "data/", n: int = 2000, seed: int = 42):
     """Aligned multi-modal subset of BigEarthNet-MM, bands reordered for Clay.
 

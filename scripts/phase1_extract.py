@@ -28,6 +28,8 @@ def _embed(embedder, chips, batch: int):
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--dataset", default="eurosat", choices=["eurosat", "bigearthnet"],
+                    help="eurosat = fast optical (~2GB); bigearthnet = multi-modal S1+S2 (~120GB)")
     ap.add_argument("--n", type=int, default=2000, help="number of patches")
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--root", default="data/")
@@ -39,13 +41,19 @@ def main() -> int:
     from geo_embed_eo.embed import load_embedder
     from geo_embed_eo import data, store
 
-    print(f"[extract] loading BigEarthNet-MM subset (n={args.n}) ...")
-    ds = data.bigearthnet_subset(root=args.root, n=args.n)
+    if args.dataset == "eurosat":
+        print(f"[extract] loading EuroSAT subset (n={args.n}, optical only) ...")
+        ds = data.eurosat_subset(root=args.root, n=args.n)
+        modalities = ("s2",)
+    else:
+        print(f"[extract] loading BigEarthNet-MM subset (n={args.n}) ...")
+        ds = data.bigearthnet_subset(root=args.root, n=args.n)
+        modalities = ("s2", "s1")
     n = len(ds["labels"])
-    print(f"[extract] got {n} aligned S2/S1 patches")
+    print(f"[extract] got {n} patches ({'+'.join(modalities)})")
 
     rows_ids, rows_mod, rows_vec, rows_lab = [], [], [], []
-    for modality in ("s2", "s1"):
+    for modality in modalities:
         print(f"[extract] embedding {modality.upper()} with Clay (fp32, device={args.device}) ...")
         embedder = load_embedder("clay", modality=modality,
                                  checkpoint=args.checkpoint, device=args.device)
@@ -58,7 +66,7 @@ def main() -> int:
 
     p = store.save_embeddings(args.out, ids=rows_ids, vectors=np.array(rows_vec),
                               modality=rows_mod, labels=rows_lab)
-    print(f"[extract] wrote {len(rows_vec)} embeddings ({n} S2 + {n} S1) → {p} ✅")
+    print(f"[extract] wrote {len(rows_vec)} embeddings ({n} × {len(modalities)} modality) → {p} ✅")
     return 0
 
 
