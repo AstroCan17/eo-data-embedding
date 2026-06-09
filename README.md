@@ -74,9 +74,16 @@ Clay v1 (first choice) · Prithvi-EO-2.0 (IBM–NASA) · SatMAE++ · DOFA/TerraM
 src/geo_embed_eo/   # library: data, embed, store, search, probe, change
 scripts/            # phaseN runnable entrypoints
 configs/            # yaml config
+research/           # decision records: dataset & model rationale (start here)
 docs/PROJECT_PLAN.md
 artifacts/          # embeddings + indexes (gitignored)
 ```
+
+## Background research
+
+Before building, read the decision records in [`research/`](research/) — especially
+[`research/01-datasets.md`](research/01-datasets.md), which justifies every dataset choice
+(specs, licenses, and which phase it serves) against the target-role requirements.
 
 ## License
 
