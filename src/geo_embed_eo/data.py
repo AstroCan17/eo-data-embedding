@@ -157,6 +157,8 @@ def oscd_pairs(root: str = "data/", split: str = "train", download: bool = False
         if t1_all.shape[0] != 13:
             raise ValueError(f"expected 13 OSCD bands, got {t1_all.shape[0]}")
         mask = torch.as_tensor(s["mask"]).long()
+        if mask.ndim == 3:  # torchgeo 0.8 returns (1, H, W); tile_mask_labels wants (H, W)
+            mask = mask[0]
         mask = (mask > 0).long()  # 0 = no change, 1 = change
         pairs.append(
             {

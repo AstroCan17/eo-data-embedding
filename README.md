@@ -130,7 +130,7 @@ python scripts/phase0_smoke.py
 | 3b — CNN baseline | `scripts/phase3_cnn_baseline.py` | Supervised ResNet-18 on the same labels/splits | ⚠️ coded; run pending (GPU) |
 | 6 — Cross-modal | `scripts/phase6_crossmodal.py` | SAR↔optical retrieval + learned alignment | ✅ |
 | 4 — App | `scripts/phase4_app.py` | Gradio search UI + montage export (see Demo) | ✅ |
-| 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ⚠️ coded; OSCD source offline/throttled |
+| 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ⚠️ coded; data unblocked (`make fetch-oscd`), run pending (GPU) |
 
 See [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) for the full plan, datasets, and rationale.
 
