@@ -5,6 +5,7 @@
 #   make sanity        run the Phase-0 sanity check
 #   make clay-smoke    verify Clay loads + embeds both modalities (needs claymodel + ckpt)
 #   make extract       run Phase-1 embedding extraction (needs GPU)
+#   make cnn-baseline  train the supervised ResNet-18 baseline (Phase 3b, needs GPU)
 #   make app           launch the Gradio demo (CPU image) on :7860
 #   make shell         drop into a shell in the GPU dev container
 #   make shell-cpu     shell in the CPU dev container (laptops without nvidia)
@@ -13,8 +14,8 @@
 
 COMPOSE ?= docker compose
 
-.PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract crossmodal app gpu-check \
-        test lint fmt clean
+.PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract cnn-baseline crossmodal app \
+        gpu-check test lint fmt clean
 
 build:
 	$(COMPOSE) build dev
@@ -39,6 +40,9 @@ clay-smoke:
 
 extract:
 	$(COMPOSE) run --rm dev python scripts/phase1_extract.py
+
+cnn-baseline:
+	$(COMPOSE) run --rm dev python scripts/phase3_cnn_baseline.py --device cuda
 
 crossmodal:
 	$(COMPOSE) run --rm dev python scripts/phase6_crossmodal.py --n 300 --checkpoint v1.5/clay-v1.5.ckpt --device cuda
