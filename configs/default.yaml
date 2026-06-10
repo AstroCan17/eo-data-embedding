@@ -4,9 +4,7 @@
 
 model:
   name: clay # clay | prithvi | timm-vit (sanity/baseline)
-  timm_backbone: vit_small_patch16_224 # phase0 sanity + CNN-vs baseline
-  device: cuda # cuda | cpu
-  precision: fp32 # P40 is Pascal — keep fp32 (fp16 is slow)
+  device: cuda # cuda | cpu  (fp32 everywhere — P40 is Pascal, fp16 is slow)
 
 data:
   dataset: eurosat # eurosat (fast optical) | bigearthnet (multi-modal, ~120GB)
@@ -26,5 +24,4 @@ probe:
   out: artifacts/probe_results.md
 
 change:
-  threshold: auto # auto | float
   frac: 0.05 # changed-pixel fraction for a tile to count as changed

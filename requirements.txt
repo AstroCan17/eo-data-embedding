@@ -2,11 +2,9 @@
 torch>=2.1
 torchvision>=0.16
 timm>=1.0.0          # ViT backbones for Phase 0 sanity + baselines
-lightning>=2.2       # training loop for probe / baseline CNN
 
 # Geospatial / EO
 torchgeo>=0.6        # datasets (EuroSAT, BigEarthNet, OSCD) + pretrained weights + samplers
-datasets>=2.19       # HuggingFace dataset mirrors (e.g. OSCD)
 webdataset>=0.2      # streaming loaders (e.g. SSL4EO-S12 cross-modal)
 # SSL4EO-S12 v1.1 streaming loader deps (the loader itself is cloned in the Dockerfile):
 zarr==2.18.0
@@ -30,7 +28,6 @@ gradio>=4.0
 
 # Utils
 pyyaml>=6.0
-tqdm>=4.66
 
 # Foundation models (Phase 1+):
 #   `claymodel` is baked into the GPU Dockerfile (needs Python >=3.11) — not here, so the

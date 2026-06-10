@@ -98,8 +98,10 @@ class ClayEmbedder:
         metadata_path = next((p for p in candidates if p and os.path.exists(p)), None)
         if metadata_path is None:
             raise FileNotFoundError(
-                "Clay metadata.yaml not found. Download it once:\n"
-                "  curl -sSL https://raw.githubusercontent.com/Clay-foundation/model/main/"
+                "Clay metadata.yaml not found. Download it once (same pinned commit as the "
+                "Dockerfile):\n"
+                "  curl -sSL https://raw.githubusercontent.com/Clay-foundation/model/"
+                "f14e698f3c237cabf8d28dec669a362d66625381/"
                 "configs/metadata.yaml -o configs/clay/metadata.yaml\n"
                 "or set CLAY_METADATA / pass metadata_path."
             )
