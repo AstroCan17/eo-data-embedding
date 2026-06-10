@@ -1,6 +1,6 @@
 # Portfolio Project Plan — Multi-Modal Geospatial Embedding Search & Change Detection
 
-**Purpose:** Demonstrate hands-on capability with the modern geospatial-AI stack — vision transformers, embeddings, and self/semi-supervised learning — for senior geospatial AI/ML roles. Build a small, working replica of what production EO teams do: turn massive EO archives into queryable, actionable intelligence via a vision-transformer foundation model + embeddings.
+**Purpose:** Demonstrate hands-on capability with the modern geospatial-AI stack — vision transformers, embeddings, and self/semi-supervised learning. Build a small, working replica of what production EO teams do: turn massive EO archives into queryable, actionable intelligence via a vision-transformer foundation model + embeddings.
 
 **Capabilities this demonstrates:** geospatial embeddings · vision transformers · multi-modal EO/MSI/SAR · unsupervised/semi-supervised · big-data/ML at scale · full model lifecycle (curation → analysis → deployment) · perspective geometry (co-registration).
 
@@ -98,10 +98,9 @@ PyTorch + Lightning · **TorchGeo** (datasets + pretrained weights + samplers) �
 - Keep everything reproducible: same `embeddings.parquet` consumed by all downstream phases.
 
 ## Deliverables
-1. **GitHub repo** (push to `github.com/AstroCan17`) — clean README, diagram, metrics, Docker, Gradio demo gif.
-2. **CV line (truthful):** "Built a multi-modal (Sentinel-1 SAR + Sentinel-2) geospatial embedding pipeline on a vision-transformer foundation model (Clay); FAISS similarity search + few-shot linear probe matching a CNN baseline with ~50× fewer labels; embedding-distance change detection (OSCD); containerized inference demo."
-3. **Interview talking points:** why embeddings, why semi-supervised, modality-fusion lessons, fp32-on-Pascal/scale trade-offs.
-4. **Application bridge:** ViT / embedding / semi-supervised capability now backed by real, shipped evidence.
+1. **GitHub repo** — clean README, architecture diagram, metrics tables, Docker images, Gradio demo.
+2. **One honest headline result:** the few-shot probe table ("a handful of labels ≈ near-full supervision"), plus retrieval and change-detection metrics — each reported with its caveats.
+3. **Decision records** (`research/`) capturing the *why* behind every dataset/model/phase choice: modality fusion, fp32-on-Pascal, decoupled embedding store, scale trade-offs.
 
 ## Scope guardrails (don't)
 - ❌ Train a foundation model from scratch. ❌ Download all of BigEarthNet. ❌ Chase SOTA. ❌ Pascal fp16.
@@ -111,4 +110,3 @@ PyTorch + Lightning · **TorchGeo** (datasets + pretrained weights + samplers) �
 - **Clay/Prithvi input plumbing fiddly** → fall back to TorchGeo pretrained ResNet/ViT weights or Major TOM precomputed embeddings to keep momentum.
 - **SAR normalization differs from optical** → document the preprocessing; it's a legit talking point, not a blocker.
 - **Time** → Phases 0–2 alone already deliver a credible portfolio piece; 3–4 + stretch are upside.
-```
