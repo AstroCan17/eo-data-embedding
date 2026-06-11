@@ -14,19 +14,24 @@ imagery, then do similarity search, few-shot classification, and change detectio
 ## Results
 
 Real run: **frozen Clay v1.5** (1024-d) embeddings over **2,000 EuroSAT** Sentinel-2 patches
-(10 Clay bands), on a Tesla P40. No fine-tuning — a linear probe on top of frozen embeddings.
+(10 Clay bands), on a Tesla P40. No fine-tuning — a linear probe on top of frozen embeddings,
+against a supervised **ResNet-18 trained from scratch** on the same raw pixels and splits.
+Protocol: fixed stratified test set (401 samples), k-shot draws from the train pool only,
+**mean±std over 5 seeds**.
 
-**Few-shot linear probe** (label efficiency):
+**Label efficiency** (macro-F1):
 
-| Labels / class | total labels | macro-F1 | accuracy |
-|---|---|---|---|
-| 5 | 50 | 0.791 | 0.802 |
-| 20 | 200 | 0.874 | 0.884 |
-| 50 | 500 | 0.900 | 0.909 |
-| full (80%) | 1,600 | 0.923 | 0.935 |
+| Labels / class | linear probe (frozen Clay) | supervised CNN (from scratch) |
+|---|---|---|
+| 5 | **0.761 ± 0.027** | 0.547 ± 0.024 |
+| 20 | **0.861 ± 0.012** | 0.747 ± 0.020 |
+| 50 | **0.895 ± 0.011** | 0.859 ± 0.018 |
+| full train pool (1,599) | 0.920 | **0.949** |
 
-→ **50 labels/class reaches ~97% of full-supervision macro-F1 with ~3× fewer labels**; 5 labels/class
-hits 86% with **32× fewer**. That label efficiency is the whole point of foundation-model embeddings.
+→ At **5 labels/class the probe beats the supervised CNN by 21 F1 points**; at 50/class it reaches
+97% of its own full-supervision ceiling — with **32× fewer labels**. With *all* labels the CNN wins
+(0.949 vs 0.920): frozen embeddings buy **label efficiency**, not supremacy — which is exactly the
+foundation-model value proposition.
 
 **Similarity search** (FAISS, no training): **precision@10 = 0.824** vs a 0.103 random-chance baseline
 — an **8× lift**. "Find scenes like this" works straight off the frozen embeddings.
@@ -44,6 +49,13 @@ cross-modal training objective, so SAR and optical of the same place don't coinc
 **1024×1024 linear map** learned on 180 pairs lifts SAR→optical retrieval to **17× chance** (median
 rank 32→8): the two modalities are *linearly relatable* in Clay's space without joint training.
 Within-modal retrieval is far stronger; purpose-built models (DOFA-CLIP) train for cross-modal directly.
+
+**Change detection (OSCD)** — honest negative result: the zero-training approach (cosine distance
+between the two dates' global tile embeddings) scores **at chance** (ROC-AUC ≈ 0.27–0.49 across
+splits, tile sizes and thresholds). Diagnostics show why — seasonal/radiometric variation moves
+unchanged tiles more than building-scale change moves urban ones — and the literature agrees naive
+two-date embedding distance is not a working method. Full analysis and follow-up paths in
+[`research/06-change-analysis.md`](research/06-change-analysis.md).
 
 > The Clay encoder embeds both modalities (`make clay-smoke`). EuroSAT (optical, single-label) gives
 > the clean probe headline; SSL4EO-S12 (streamed S1+S2) gives the cross-modal result above — no 120 GB
