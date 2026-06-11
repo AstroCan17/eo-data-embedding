@@ -47,7 +47,7 @@ embedding. The seasonal signal dominates the change signal, with the wrong sign 
   [arXiv:1810.08468](https://arxiv.org/abs/1810.08468)). SSL-pretrained encoders *fine-tuned*
   on OSCD land in the same region — SeCo reports F1 = 46.9
   ([arXiv:2103.16607](https://arxiv.org/pdf/2103.16607)). OSCD is small, imbalanced and hard.
-- **Seasonal variation dominating embeddings is a documented failure mode**, not our discovery:
+- **Seasonal variation dominating embeddings is a documented failure mode**, not my discovery:
   it is the founding motivation of SeCo (seasonal-contrast pretraining) and CaCo
   ([arXiv:2405.20462](https://arxiv.org/pdf/2405.20462) discussion), i.e. generic SSL/FM
   embeddings are *not* seasonally invariant by default.
@@ -64,7 +64,7 @@ embedding. The seasonal signal dominates the change signal, with the wrong sign 
 
 **Conclusion:** the ~0.7 expectation in issue #6 had no literature support. A chance-level
 result for two-date, global-embedding cosine distance on OSCD is *consistent* with published
-evidence; nothing we found reports this exact zero-shot setup succeeding.
+evidence; nothing I found reports this exact zero-shot setup succeeding.
 
 ## 5. Paths that would close the gap (not in scope here)
 

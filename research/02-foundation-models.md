@@ -1,12 +1,12 @@
-# Research 02 — ViT Foundation Models: Which Encoder, and How We Wrap It
+# Research 02 — ViT Foundation Models: Which Encoder, and How I Wrap It
 
 **Goal of this note.** Choose the **pretrained vision-transformer foundation model** that produces
-our embeddings, decide how it ingests **multi-band optical + SAR**, and define the single interface
+my embeddings, decide how it ingests **multi-band optical + SAR**, and define the single interface
 every phase depends on: `encode(x) -> (B, D)`. Specs verified against primary sources (links at end).
 
 This note answers the open question left by [`01-datasets.md`](01-datasets.md): *how does the model
 handle 13-band optical + 2-band SAR without collapsing to RGB?* Short answer: the right models have a
-**dynamic / wavelength-aware patch embedding**, so we feed real bands, not RGB.
+**dynamic / wavelength-aware patch embedding**, so I feed real bands, not RGB.
 
 ---
 
@@ -34,14 +34,14 @@ handle 13-band optical + 2-band SAR without collapsing to RGB?* Short answer: th
   with a real multi-band patch embedder. That makes the **multi-modal embedding** story first-class
   instead of a workaround. 1024-d vectors are FAISS-friendly. Apache-2.0 removes licensing worry.
 - **How it ingests data:** a "datacube" — pixels **+ metadata** (band wavelengths, GSD, time, lat/lon).
-  We pass S2 (10-band) and S1 (2-band) cubes through the **same** encoder → that *is* our multi-modal embed.
+  I pass S2 (10-band) and S1 (2-band) cubes through the **same** encoder → that *is* my multi-modal embed.
 
 ### 2.2 DOFA — *the multi-modal showcase / second model*
 - **Arch:** shared ViT with a **wavelength-conditioned dynamic patch embedding** (hypernetwork);
   masked image modeling with a **variable number of spectral bands**; distillation-based continual pretrain.
   Inspired by "neural plasticity"; handles 5 sensor types incl. **SAR + optical**. (Extension: DOFA-CLIP.)
 - **Why include:** Conceptually the strongest **"multi-modal architectures"** narrative — *wavelength as
-  the unifying parameter* across modalities. Great as a **comparison** against Clay to show we understand
+  the unifying parameter* across modalities. Great as a **comparison** against Clay to show I understand
   more than one fusion philosophy. Newer / more research-y, so secondary, not primary.
 - **License:** research release (GitHub `xiong-zhitong/DOFA-CLIP`) — **verify terms before publishing results.**
 
@@ -52,8 +52,8 @@ handle 13-band optical + 2-band SAR without collapsing to RGB?* Short answer: th
 - **License:** open on HuggingFace `ibm-nasa-geospatial/Prithvi-EO-2.0-300M` + IBM TerraTorch
   (Apache-2.0 per model card — **verify**).
 - **Why fallback:** Excellent optical model and very well tooled (TerraTorch), but the **fixed 6-band,
-  optical-only** input makes it a poor fit for our **SAR+optical** thesis. Use only if Clay plumbing stalls
-  *and* we drop SAR for a phase.
+  optical-only** input makes it a poor fit for my **SAR+optical** thesis. Use only if Clay plumbing stalls
+  *and* I drop SAR for a phase.
 
 ### 2.4 SatMAE / SatMAE++ — *academic baseline / reference*
 - **Arch:** ViT MAE; SatMAE adds **temporal + spectral** positional encoding; trained on **fMoW-Sentinel**
@@ -95,10 +95,10 @@ encode(images, meta) -> Tensor of shape (B, D)   # D = 1024 for Clay
   downstream (FAISS, probe, change) is model-agnostic.
 
 ## 5. Band & SAR handling (resolves the 01-datasets open question)
-- **No RGB collapse.** With Clay/DOFA we feed **real bands**: S2 as its multi-band set, S1 SAR as its
+- **No RGB collapse.** With Clay/DOFA I feed **real bands**: S2 as its multi-band set, S1 SAR as its
   2-band set, each with correct **wavelength/metadata**. The model's dynamic patch embedder does the rest.
 - **SAR normalization still ours to own.** S1 GRD/RTC backscatter is in dB-ish/linear ranges unlike optical
-  reflectance — we set and **document** the clipping/normalization before embedding.
+  reflectance — I set and **document** the clipping/normalization before embedding.
 - **Two embeddings per AOI** (one optical, one SAR) → enables **cross-modal retrieval** (query optical,
   hit SAR) and a richer change signal.
 
@@ -106,7 +106,7 @@ encode(images, meta) -> Tensor of shape (B, D)   # D = 1024 for Clay
 - **fp32 only.** Pascal has weak fp16 throughput and no bf16 → run inference in **fp32**. Clay's ~632M
   params in fp32 (~2.5 GB weights) leave ample room in 24 GB for large inference batches.
 - Embedding extraction is **forward-only, frozen** → no optimizer state, memory-light, P40 is plenty.
-- Keep batch size modest (e.g. 32–64 × 224²) and **write embeddings to parquet as we go** so a long pass
+- Keep batch size modest (e.g. 32–64 × 224²) and **write embeddings to parquet as I go** so a long pass
   is resumable.
 
 ## 7. Open questions for Phase 1
@@ -115,7 +115,7 @@ encode(images, meta) -> Tensor of shape (B, D)   # D = 1024 for Clay
 - **License confirmation:** verify DOFA and Prithvi license terms on their model cards before publishing
   any derived results/weights.
 - **S1 product:** GRD vs RTC — match whatever the BigEarthNet-MM S1 patches provide; note it.
-- **Dim alignment:** if we compare Clay (1024) vs DOFA (different D), keep separate indexes — don't mix
+- **Dim alignment:** if I compare Clay (1024) vs DOFA (different D), keep separate indexes — don't mix
   embedding spaces in one FAISS index.
 
 ---

@@ -1,7 +1,7 @@
 # Research 03 — Phase-0 Decisions & Green-Light Gate
 
 **Goal of this note.** Define exactly what Phase 0 must prove, the setup decisions behind it, and the
-**explicit gate** that lets us move to Phase 1 (real foundation model + multi-modal data on the P40).
+**explicit gate** that lets me move to Phase 1 (real foundation model + multi-modal data on the P40).
 Phase 0 is about **de-risking plumbing**, not science.
 
 Builds on: dataset choice in [`01-datasets.md`](01-datasets.md) (EuroSAT for Phase 0) and the
@@ -24,7 +24,7 @@ Phase 0 is wasted effort.
 
 ### D1 — Sanity backbone = timm ViT, **not** Clay
 Use `vit_small_patch16_224` (timm, frozen, `num_classes=0`) as the Phase-0 encoder.
-**Why:** it implements the same `encode(x) -> (B, D)` contract with zero integration cost. We validate
+**Why:** it implements the same `encode(x) -> (B, D)` contract with zero integration cost. I validate
 the *wiring* (shapes, finiteness, the store, FAISS, the probe) before paying the Clay datacube tax.
 Clay's real value (multi-band + SAR) is a Phase-1 concern.
 
