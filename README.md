@@ -49,6 +49,32 @@ Within-modal retrieval is far stronger; purpose-built models (DOFA-CLIP) train f
 > the clean probe headline; SSL4EO-S12 (streamed S1+S2) gives the cross-modal result above — no 120 GB
 > BigEarthNet download needed.
 
+### Known approximations
+
+Deliberate simplifications behind the numbers above — documented in the same spirit as the
+S1 GRD-vs-RTC offset note in [`research/05-crossmodal.md`](research/05-crossmodal.md):
+
+- **L1C vs L2A normalization stats.** EuroSAT (and OSCD) are Sentinel-2 **Level-1C**
+  (top-of-atmosphere) products, while the Clay band stats in `clay_metadata.py` were derived for
+  **L2A** (surface reflectance). The value ranges are close enough that the probe still reaches
+  0.92 macro-F1, but it is a known train/inference distribution mismatch, accepted for simplicity.
+- **GSD semantics after upsampling.** EuroSAT's 64×64 @ 10 m patches are bilinearly upsampled to
+  Clay's 256×256 input while `gsd=10` is passed to the position encoding. After upsampling the
+  effective pixel spacing is 2.5 m, but the content is still a 640 m footprint — we keep `gsd=10`
+  to describe the sensor, not the resampled grid. A native-64 vs upsampled-256 ablation is open.
+- **Class token as *the* embedding.** `embed.py` uses Clay's cls token; mean-pooled patch tokens
+  are a known alternative (open question in [`research/02`](research/02-foundation-models.md)) and
+  have not been compared yet.
+- **Zero `time`/`latlon` metadata.** Clay accepts "unknown" (zeros) for acquisition time and
+  location; EuroSAT patches are actually georeferenced, so conditioning on real metadata is an
+  available (unrun) ablation.
+- **Best-F1 in Phase 5 is an oracle threshold.** The threshold scan runs on the evaluation tiles
+  themselves; ROC-AUC is the primary, threshold-free metric. A deployed system would calibrate the
+  threshold on held-out scenes.
+- **Exact search at demo scale.** FAISS `IndexFlatIP` over ~2k vectors is exact and the right
+  choice at this size. What changes at 100M+ vectors — index structure, memory, sharding, the
+  store schema — is written up in [`docs/SCALING.md`](docs/SCALING.md).
+
 ## Demo
 
 `make app` serves an interactive Gradio search UI (`scripts/phase4_app.py`); `--export` renders a
@@ -150,6 +176,7 @@ scripts/            # phaseN runnable entrypoints
 configs/            # yaml config
 research/           # decision records: dataset & model rationale (start here)
 docs/PROJECT_PLAN.md
+docs/SCALING.md     # what changes between 2k vectors (this demo) and 100M+
 Dockerfile          # GPU dev image (pip-only, CUDA 12.1)
 Dockerfile.cpu      # lightweight CPU image (Gradio demo)
 docker-compose.yml  # dev (gpu) / dev-cpu / app services
