@@ -34,7 +34,7 @@ make test     # pytest (unit tests, CPU, no downloads)
 | 1 extract | `make extract` | `scripts/phase1_extract.py` |
 | 2 search / 3 probe | (run in container) | `scripts/phase{2,3}_*.py` |
 | 4 demo | `make app` | `scripts/phase4_app.py` |
-| 5 change / 6 cross-modal | `make crossmodal` etc. | `scripts/phase{5,6}_*.py` |
+| 5 change / 6 cross-modal | `make fetch-oscd` + `make change` / `make crossmodal` | `scripts/phase{5,6}_*.py` |
 
 Defaults live in `configs/default.yaml`; CLI flags override. See `research/` for the design
 decision records behind each dataset/model/phase choice.

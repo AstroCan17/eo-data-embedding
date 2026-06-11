@@ -96,7 +96,7 @@ This repo demonstrates that layer end to end.
 | Frozen backbone + few-shot linear probe | unsupervised / semi-supervised |
 | FAISS index over the archive | big-data / ML at scale |
 | Embed-once → store → reuse | full model lifecycle, scale |
-| Bitemporal Δembedding change maps | defense/intelligence use case |
+| Bitemporal Δembedding change maps | defense/intelligence use case — honest negative result ([analysis](research/06-change-analysis.md)) |
 
 ## Architecture
 
@@ -152,11 +152,11 @@ python scripts/phase0_smoke.py
 | 0 — Smoke (gate) | `scripts/phase0_smoke.py` | Full pipeline on a stand-in encoder: embed → store → FAISS → probe | ✅ |
 | 1 — Extract | `scripts/phase1_extract.py` | EuroSAT (`--dataset bigearthnet` for multi-modal) → `embeddings.parquet` | ✅ EuroSAT |
 | 2 — Search | `scripts/phase2_search.py` | FAISS retrieval — precision@10 = 0.824 | ✅ |
-| 3 — Probe | `scripts/phase3_probe.py` | Few-shot linear probe — 0.90 macro-F1 @50/class | ✅ |
-| 3b — CNN baseline | `scripts/phase3_cnn_baseline.py` | Supervised ResNet-18 on the same labels/splits | ⚠️ coded; run pending (GPU) |
+| 3 — Probe | `scripts/phase3_probe.py` | Few-shot linear probe — 0.895±0.011 macro-F1 @50/class (5 seeds, fixed test set) | ✅ |
+| 3b — CNN baseline | `scripts/phase3_cnn_baseline.py` | Supervised ResNet-18, same splits — 5-shot: 0.547 vs probe 0.761; full: 0.949 vs probe 0.920 | ✅ |
 | 6 — Cross-modal | `scripts/phase6_crossmodal.py` | SAR↔optical retrieval + learned alignment | ✅ |
 | 4 — App | `scripts/phase4_app.py` | Gradio search UI + montage export (see Demo) | ✅ |
-| 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ⚠️ coded; OSCD source offline/throttled |
+| 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ✅ pipeline runs · ❌ zero-training Δembedding ≈ chance (ROC-AUC 0.47) — [analysis](research/06-change-analysis.md) |
 
 See [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) for the full plan, datasets, and rationale.
 

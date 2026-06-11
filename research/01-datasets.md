@@ -83,7 +83,10 @@ specific job. The table in §4 is the result.
   pixel-level change masks · mixed 10/20/60 m resolution.
 - **License:** open for research (IEEE DataPort / author release). Verify before redistribution;
   fine to use and show results.
-- **Access:** `torchgeo.datasets.OSCD`; HuggingFace `blanchon/OSCD_MSI` / `OSCD_RGB`.
+- **Access:** `torchgeo.datasets.OSCD`; HuggingFace `blanchon/OSCD_MSI` / `OSCD_RGB`. TorchGeo's
+  own downloader points at the IMT file shares, whose Train-Labels host goes offline for long
+  stretches — `scripts/fetch_oscd.py` pulls the same three zips (MD5-verified byte-identical)
+  from the HF mirror `hkristen/oscd` instead.
 - **Why we use it:** The **defense/intelligence use case** in miniature — "what changed here".
   We embed each date and threshold the **embedding distance** to produce a change map. It also
   lets the **perspective-geometry** strength show (the pairs must be co-registered).
