@@ -153,6 +153,7 @@ python scripts/phase0_smoke.py
 | 1 — Extract | `scripts/phase1_extract.py` | EuroSAT (`--dataset bigearthnet` for multi-modal) → `embeddings.parquet` | ✅ EuroSAT |
 | 2 — Search | `scripts/phase2_search.py` | FAISS retrieval — precision@10 = 0.824 | ✅ |
 | 3 — Probe | `scripts/phase3_probe.py` | Few-shot linear probe — 0.90 macro-F1 @50/class | ✅ |
+| 3b — CNN baseline | `scripts/phase3_cnn_baseline.py` | Supervised ResNet-18 on the same labels/splits | ⚠️ coded; run pending (GPU) |
 | 6 — Cross-modal | `scripts/phase6_crossmodal.py` | SAR↔optical retrieval + learned alignment | ✅ |
 | 4 — App | `scripts/phase4_app.py` | Gradio search UI + montage export (see Demo) | ✅ |
 | 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ⚠️ coded; OSCD source offline/throttled |
