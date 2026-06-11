@@ -173,7 +173,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full dev setup and the phase â†
 
 Before building, read the decision records in [`research/`](research/) â€” especially
 [`research/01-datasets.md`](research/01-datasets.md), which justifies every dataset choice
-(specs, licenses, and which phase it serves) against the target-role requirements.
+(specs, licenses, and which phase it serves) against the project's capability goals.
 
 ## License
 

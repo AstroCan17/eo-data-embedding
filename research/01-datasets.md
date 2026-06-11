@@ -8,19 +8,20 @@ and *which project phase* it serves. All specs below are verified against primar
 
 ## 1. Selection criteria
 
-A dataset earns a place in this project only if it helps prove a capability that senior
-geospatial AI/ML roles ask for. Concretely, we score candidates on:
+A dataset earns a place in this project only if it helps prove a capability the project sets
+out to demonstrate. Concretely, we score candidates on:
 
 1. **Multi-modal** — does it pair **Sentinel-1 (SAR)** with **Sentinel-2 (optical/MSI)**?
-   These roles explicitly want EO + MSI + SAR. Single-modality sets are only useful as fast baselines.
+   The EO + MSI + SAR combination is the project's core claim. Single-modality sets are only
+   useful as fast baselines.
 2. **Label availability** — do we get labels for the **few-shot / semi-supervised** story?
    We need *some* labels to show "50 labels ≈ a CNN trained on thousands".
 3. **Scale** — is there a large unlabeled corpus to populate an embedding index ("ML at scale")?
 4. **Tooling** — is it one call away in **TorchGeo / HuggingFace**? Friction kills momentum.
-5. **Licensing** — permissive enough to publish a public portfolio repo against it.
+5. **Licensing** — permissive enough to publish a public repo against it.
 6. **Task fit** — classification (probe), retrieval (search), or change detection (stretch)?
 
-No single dataset satisfies all six — so we use a small **portfolio of datasets**, each for a
+No single dataset satisfies all six — so we use a small **set of datasets**, each for a
 specific job. The table in §4 is the result.
 
 ---
@@ -91,8 +92,8 @@ specific job. The table in §4 is the result.
 
 ### 2.6 SpaceNet 6 — *optional, ties to the object-detection background*
 - **What:** Multi-sensor **SAR + optical** dataset over Rotterdam with building footprints.
-- **Why (maybe):** If we want to connect to the candidate's **YOLO/object-detection** past and
-  show SAR building extraction. **Deferred** — adds scope; OSCD already covers SAR-adjacent change.
+- **Why (maybe):** If we want to extend the pipeline toward **object detection** (SAR building
+  extraction). **Deferred** — adds scope; OSCD already covers SAR-adjacent change.
 
 ---
 
@@ -134,7 +135,7 @@ The real multi-modal work (BigEarthNet-MM on the P40) starts in **Phase 1**, onc
   an RGB subset. **Phase 1 decision:** how does the chosen foundation model (Clay/Prithvi) ingest
   all bands + SAR? (Clay has band-aware patch embedding; Prithvi expects specific HLS bands.)
 - **SAR normalization:** S1 GRD/RTC dynamic range differs from optical reflectance. Document the
-  dB/clipping/normalization used before embedding — a legitimate talking point, not a blocker.
+  dB/clipping/normalization used before embedding — a documented caveat, not a blocker.
 - **Co-registration (OSCD):** confirm pairs are registered (they are, per the dataset), but note
   residual misregistration as a change-detection false-positive source.
 - **Subset sampling:** stratify the BigEarthNet subset by class so the few-shot probe has coverage.

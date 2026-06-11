@@ -92,8 +92,8 @@ Dockerfile only.
 - **TorchGeo band order:** assert is on channel **count** (14); confirm the S2 ordering for the
   installed TorchGeo version — adjust `BEN_S2_TO_CLAY` if it differs.
 - **S1 product mismatch:** Clay stats are **RTC**; BigEarthNet S1 is **GRD** sigma0 (dB). Both are dB
-  backscatter, so the normalization is close but not identical — documented, acceptable, and a fair
-  talking point. (For a purist run, recompute S1 mean/std on the subset.)
+  backscatter, so the normalization is close but not identical — documented and acceptable.
+  (For a purist run, recompute S1 mean/std on the subset.)
 - **Multi-label → primary class:** BigEarthNet is multi-label; we reduce to argmax for the single-label
   few-shot probe. A multi-label probe is a possible upgrade.
 

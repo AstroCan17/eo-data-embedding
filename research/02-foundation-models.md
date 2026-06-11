@@ -15,7 +15,7 @@ handle 13-band optical + 2-band SAR without collapsing to RGB?* Short answer: th
 1. **Native multi-modal** — can one model embed **Sentinel-2 (optical/MSI)** *and* **Sentinel-1 (SAR)**?
 2. **Arbitrary bands** — does it accept N bands (not just 3 RGB)? This kills the "downsample to RGB" hack.
 3. **Embedding access** — is there a clean path to a per-image vector (`(B, D)`), not just a task head?
-4. **License** — permissive enough to use in a public-facing portfolio.
+4. **License** — permissive enough for a public repository.
 5. **Maturity / tooling** — documented inference, released weights, examples.
 6. **Compute fit** — runs on a **Tesla P40 (24 GB, Pascal → fp32 only)** at inference.
 
@@ -59,7 +59,7 @@ handle 13-band optical + 2-band SAR without collapsing to RGB?* Short answer: th
 - **Arch:** ViT MAE; SatMAE adds **temporal + spectral** positional encoding; trained on **fMoW-Sentinel**
   (S2) and fMoW-RGB. SatMAE++ (CVPR 2024) adds **multi-scale** reconstruction (`techmn/satmae_pp`).
 - **Why reference only:** Strong, citable multispectral MAE, but **optical, no SAR fusion**, and less
-  turnkey for embedding extraction than Clay. Keep as a **baseline talking point**, not the engine.
+  turnkey for embedding extraction than Clay. Keep as a **reference baseline**, not the engine.
 - **License:** research release — confirm in repo.
 
 ---
@@ -98,7 +98,7 @@ encode(images, meta) -> Tensor of shape (B, D)   # D = 1024 for Clay
 - **No RGB collapse.** With Clay/DOFA we feed **real bands**: S2 as its multi-band set, S1 SAR as its
   2-band set, each with correct **wavelength/metadata**. The model's dynamic patch embedder does the rest.
 - **SAR normalization still ours to own.** S1 GRD/RTC backscatter is in dB-ish/linear ranges unlike optical
-  reflectance — we set and **document** the clipping/normalization before embedding. (Legit talking point.)
+  reflectance — we set and **document** the clipping/normalization before embedding.
 - **Two embeddings per AOI** (one optical, one SAR) → enables **cross-modal retrieval** (query optical,
   hit SAR) and a richer change signal.
 
