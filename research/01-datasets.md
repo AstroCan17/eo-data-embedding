@@ -18,10 +18,10 @@ out to demonstrate. Concretely, we score candidates on:
    We need *some* labels to show "50 labels ≈ a CNN trained on thousands".
 3. **Scale** — is there a large unlabeled corpus to populate an embedding index ("ML at scale")?
 4. **Tooling** — is it one call away in **TorchGeo / HuggingFace**? Friction kills momentum.
-5. **Licensing** — permissive enough to publish a public portfolio repo against it.
+5. **Licensing** — permissive enough to publish a public repo against it.
 6. **Task fit** — classification (probe), retrieval (search), or change detection (stretch)?
 
-No single dataset satisfies all six — so we use a small **portfolio of datasets**, each for a
+No single dataset satisfies all six — so we use a small **set of datasets**, each for a
 specific job. The table in §4 is the result.
 
 ---
@@ -135,7 +135,7 @@ The real multi-modal work (BigEarthNet-MM on the P40) starts in **Phase 1**, onc
   an RGB subset. **Phase 1 decision:** how does the chosen foundation model (Clay/Prithvi) ingest
   all bands + SAR? (Clay has band-aware patch embedding; Prithvi expects specific HLS bands.)
 - **SAR normalization:** S1 GRD/RTC dynamic range differs from optical reflectance. Document the
-  dB/clipping/normalization used before embedding — a legitimate talking point, not a blocker.
+  dB/clipping/normalization used before embedding — a documented caveat, not a blocker.
 - **Co-registration (OSCD):** confirm pairs are registered (they are, per the dataset), but note
   residual misregistration as a change-detection false-positive source.
 - **Subset sampling:** stratify the BigEarthNet subset by class so the few-shot probe has coverage.
