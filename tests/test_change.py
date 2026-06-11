@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import torch
 
 from geo_embed_eo import change
@@ -17,18 +18,16 @@ def test_change_score_l2():
     assert np.allclose(s, 2.0)  # sqrt(4)
 
 
-def test_threshold_auto():
-    s = np.array([0.0, 0.0, 0.0, 10.0])
-    m = change.threshold_changes(s, threshold="auto")
-    assert m.dtype == np.uint8
-    assert m[-1] == 1
-    assert m[:3].sum() == 0
-
-
 def test_tile_image_pads_to_grid():
     img = torch.zeros(3, 300, 260)
     tiles = change.tile_image(img, size=256)
     assert tiles.shape == (4, 3, 256, 256)  # padded to 512x512 -> 2x2
+
+
+def test_tile_image_rejects_too_small_images():
+    img = torch.zeros(3, 200, 300)  # H < tile size — reflect pad would fail
+    with pytest.raises(ValueError, match="smaller than the tile size"):
+        change.tile_image(img, size=256)
 
 
 def test_tile_mask_labels():

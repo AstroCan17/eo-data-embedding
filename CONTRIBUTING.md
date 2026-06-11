@@ -11,7 +11,7 @@ make build && make shell
 # or local venv — enough for tests + lint
 python -m venv .venv && source .venv/bin/activate
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install -e ".[dev,test]"
+pip install -e ".[dev]"
 pre-commit install
 ```
 
@@ -41,5 +41,6 @@ decision records behind each dataset/model/phase choice.
 
 ## Conventions
 - Python 3.11, ruff (lint + format), line length 110.
-- Library code in `src/geo_embed_eo/` is typed and side-effect-free; runnable scripts in `scripts/`.
+- Library code in `src/geo_embed_eo/` is side-effect-free with type hints on public interfaces;
+  heavy imports stay inside functions. Runnable scripts live in `scripts/`.
 - Branch off `main`, open a PR, keep CI green.

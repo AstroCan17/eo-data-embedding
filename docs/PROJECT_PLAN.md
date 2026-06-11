@@ -57,7 +57,7 @@ Engineering narrative: **decouple embeddings from compute** — extract once (he
 | **DOFA / TerraMind** | Multi-modal FM | multi-modal | Stretch — strengthens "multi-modal architectures" claim |
 
 ## Stack
-PyTorch + Lightning · **TorchGeo** (datasets + pretrained weights + samplers) · HuggingFace (Clay/Prithvi) · **FAISS** (ANN search) · rasterio/stackstac/pystac-client (raw Sentinel) · **Docker** (inference/demo) · **Gradio/Streamlit** (search UI).
+PyTorch · **TorchGeo** (datasets + pretrained weights + samplers) · HuggingFace (Clay/Prithvi) · **FAISS** (ANN search) · rasterio/stackstac/pystac-client (raw Sentinel) · **Docker** (inference/demo) · **Gradio/Streamlit** (search UI).
 
 ---
 

@@ -20,19 +20,15 @@ def embedding_change_score(emb_t1: np.ndarray, emb_t2: np.ndarray, metric: str =
     raise ValueError(f"unknown metric: {metric}")
 
 
-def threshold_changes(scores: np.ndarray, threshold="auto") -> np.ndarray:
-    """Binary change mask. 'auto' = mean + 1*std."""
-    if threshold == "auto":
-        threshold = float(scores.mean() + scores.std())
-    return (scores > threshold).astype("uint8")
-
-
 def tile_image(img, size: int = 256):
     """Reflect-pad a (C,H,W) image to multiples of `size` and return tiles (N,C,size,size)."""
     import torch
     import torch.nn.functional as F
 
     C, H, W = img.shape
+    if size > H or size > W:
+        # reflect padding requires pad < dim; smaller scenes need a smaller tile size
+        raise ValueError(f"image ({H}x{W}) is smaller than the tile size ({size})")
     ph, pw = (size - H % size) % size, (size - W % size) % size
     img = F.pad(img.unsqueeze(0), (0, pw, 0, ph), mode="reflect")[0]
     rows, cols = img.shape[1] // size, img.shape[2] // size

@@ -18,7 +18,8 @@ jobs:
       # CPU torch + torchvision from the same index (matched ABI — avoids the
       # "operator torchvision::nms does not exist" mismatch; default torchvision is a CUDA build).
       - run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-      - run: pip install -e ".[dev,test]"
+      # `dependencies` is dynamic from requirements.txt, so this installs the full stack.
+      - run: pip install -e ".[dev]"
       - name: Lint
         run: |
           ruff check .
@@ -35,8 +36,3 @@ jobs:
       # are intentionally not run in CI — no GPU or datasets on hosted runners).
       - name: Build CPU image
         run: docker build -f Dockerfile.cpu -t geo-embed-eo:cpu .
-      - name: Upload demo artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: demo-search
-          path: docs/demo_search.png

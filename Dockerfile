@@ -33,22 +33,29 @@ RUN python -m pip install -r requirements.txt
 
 # Clay foundation model (needs py>=3.11). The PyPI `claymodel` 1.5.0 wheel is mis-packaged
 # (flat modules with `from src.model import ...` that don't resolve), so install from the
-# official GitHub repo, which ships the proper `claymodel` package. Re-pin cu121 torch if a
-# transitive dep clobbered it.
-RUN python -m pip install "git+https://github.com/Clay-foundation/model.git" && \
+# official GitHub repo, which ships the proper `claymodel` package. Pinned to the commit the
+# working image was frozen at (see requirements.lock). Re-pin cu121 torch if a transitive dep
+# clobbered it.
+ARG CLAY_COMMIT=f14e698f3c237cabf8d28dec669a362d66625381
+RUN python -m pip install "git+https://github.com/Clay-foundation/model.git@${CLAY_COMMIT}" && \
     ( python -c "import torch,sys; sys.exit(0 if torch.version.cuda else 1)" || \
       python -m pip install --force-reinstall torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121 )
 
 # Clay's module reads configs/metadata.yaml (band wavelengths/means/stds). It isn't shipped in
-# the package, so fetch it to a fixed path; ClayEmbedder looks here via CLAY_METADATA search.
+# the package, so fetch it (same pinned commit) to a fixed path; ClayEmbedder looks here via
+# CLAY_METADATA search.
 RUN mkdir -p /opt/clay && \
-    curl -sSL https://raw.githubusercontent.com/Clay-foundation/model/main/configs/metadata.yaml \
+    curl -sSL "https://raw.githubusercontent.com/Clay-foundation/model/${CLAY_COMMIT}/configs/metadata.yaml" \
         -o /opt/clay/metadata.yaml
 
 # SSL4EO-S12 v1.1 streaming loader (cross-modal). The repo is NOT a pip package (no setup.py),
-# so we clone it and put it on PYTHONPATH; its deps are in requirements.txt above.
-RUN git clone --depth 1 https://github.com/DLR-MF-DAS/SSL4EO-S12-v1.1.git /opt/ssl4eos12
-ENV PYTHONPATH=/opt/ssl4eos12:${PYTHONPATH}
+# so we clone it (pinned) and put it on PYTHONPATH; its deps are in requirements.txt above.
+ARG SSL4EO_COMMIT=d1e2337305a88953814fc7d8ed5b0ec019cbe248
+RUN git clone https://github.com/DLR-MF-DAS/SSL4EO-S12-v1.1.git /opt/ssl4eos12 && \
+    git -C /opt/ssl4eos12 checkout --detach "${SSL4EO_COMMIT}"
+# No ":${PYTHONPATH}" suffix: the var is unset in the base image, and a trailing ":" would
+# silently add the CWD to sys.path.
+ENV PYTHONPATH=/opt/ssl4eos12
 
 COPY pyproject.toml ./
 COPY src ./src
