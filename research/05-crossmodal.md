@@ -15,7 +15,7 @@ median rank** (both directions). Random-chance P@1 = 1/N.
 - Distributed as **zarr-zip / webdataset** (NOT the HF `datasets` library). Official streaming loader
   pulls only the first ~N samples — no full download.
 - S2 12-band order assumed `[B01,B02,B03,B04,B05,B06,B07,B08,B8A,B09,B11,B12]` → Clay map = `BEN_S2_TO_CLAY`
-  `[1,2,3,4,5,6,7,8,10,11]`; S1 `[vv,vh]` → `[0,1]`. We take time index 0.
+  `[1,2,3,4,5,6,7,8,10,11]`; S1 `[vv,vh]` → `[0,1]`. I take time index 0.
 
 ## Dependency (install on the GPU host before running)
 ```bash

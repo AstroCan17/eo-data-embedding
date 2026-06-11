@@ -9,9 +9,9 @@
 
 ---
 
-## Core thesis (what we're proving)
+## Core thesis (what I'm proving)
 
-> Use a **pretrained ViT geospatial foundation model** (we do NOT train one from scratch — neither do production EO teams day-to-day) to embed **Sentinel-2 (optical) + Sentinel-1 (SAR)** imagery, then:
+> Use a **pretrained ViT geospatial foundation model** (I do NOT train one from scratch — neither do production EO teams day-to-day) to embed **Sentinel-2 (optical) + Sentinel-1 (SAR)** imagery, then:
 > 1. **Similarity search** (FAISS): "find scenes/objects like this across the archive" — the actionable-intelligence play in miniature.
 > 2. **Few-shot linear probe** on frozen embeddings: match a fully-supervised CNN with ~50× fewer labels — proves the embedding/foundation-model value prop + semi-supervised.
 > 3. **Embedding-distance change detection** (OSCD bitemporal pairs): "what changed" — the defense/intelligence use case.
