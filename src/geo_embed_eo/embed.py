@@ -139,8 +139,15 @@ class ClayEmbedder:
             "waves": self._waves.to(self.device),
         }
 
-    def encode(self, x):
-        """Raw (B, C, H, W) bands -> (B, 1024) embeddings (float, CPU)."""
+    def encode(self, x, return_patches: bool = False):
+        """Raw (B, C, H, W) bands -> embeddings (float, CPU).
+
+        Default: the (B, 1024) class-token vector every phase depends on.
+        `return_patches=True`: the per-patch tokens (B, P, 1024) plus the patch grid `(gh, gw)`
+        — for spatial change maps that need patch-level resolution rather than one vector per tile.
+        """
+        import math
+
         import torch
         import torch.nn.functional as F
 
@@ -152,9 +159,21 @@ class ClayEmbedder:
         x = (x - self._means) / self._stds
         with torch.no_grad():
             out = self._encoder(self._datacube(x))
-            patches = out[0] if isinstance(out, (tuple, list)) else out
-            emb = patches[:, 0, :]  # class token at index 0
-        return emb.float().cpu()
+            tokens = out[0] if isinstance(out, (tuple, list)) else out
+            if not return_patches:
+                return tokens[:, 0, :].float().cpu()  # class token at index 0
+            # VERIFY-AT-RUNTIME: token layout is [cls, patch_0..patch_{P-1}]; Clay v1.5 uses an
+            # 8-px patch on the 256-px datacube -> 32x32 = 1024 patch tokens. Derive the square
+            # grid from the token count rather than hard-coding it; bail loudly if it isn't square.
+            patches = tokens[:, 1:, :]
+            p = patches.shape[1]
+            side = math.isqrt(p)
+            if side * side != p:
+                raise ValueError(
+                    f"patch-token count {p} is not a perfect square; cannot infer a spatial grid "
+                    "(check Clay's encoder output layout for extra metadata tokens)"
+                )
+        return patches.float().cpu(), (side, side)
 
     __call__ = encode
 

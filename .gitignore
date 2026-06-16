@@ -34,3 +34,7 @@ v1.5/
 
 # Clay metadata (fetched, not vendored)
 configs/clay/metadata.yaml
+
+# Kaggle scratch
+kaggle/_payload/
+kaggle/_out/
