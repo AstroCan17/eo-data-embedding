@@ -1,0 +1,14 @@
+{
+  "id": "candenizkaya/geo-embed-eo-change-probe",
+  "title": "geo-embed-eo change probe",
+  "code_file": "run_change_probe.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": ["candenizkaya/geo-embed-eo-src"],
+  "competition_sources": [],
+  "kernel_sources": []
+}
