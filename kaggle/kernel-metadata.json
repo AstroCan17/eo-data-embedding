@@ -8,7 +8,7 @@
   "enable_gpu": true,
   "enable_tpu": false,
   "enable_internet": true,
-  "dataset_sources": ["candenizkaya/geo-embed-eo-src"],
+  "dataset_sources": ["candenizkaya/gh-pat"],
   "competition_sources": [],
   "kernel_sources": []
 }
