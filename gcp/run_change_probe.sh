@@ -76,17 +76,14 @@ gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" --command '
   export GEO_WORK="$HOME/work" GEO_REPO="$HOME/work/repo"
   mkdir -p "$GEO_WORK"
   git clone --depth 1 -b '"$BRANCH"' "https://x-access-token:${GH_PAT}@'"$GH_REPO"'" "$GEO_REPO" 2>/dev/null
-  # On this DL VM torch lives in the system dist-packages (root-owned, not writable by the login
-  # user), so a plain `pip install` silently lands in ~/.local and the runner can not import it.
-  # Run the runner as root so its pip install goes system-wide, next to torch. (conda is absent here;
-  # the conda branch is kept for other DL images.)
-  PY=/opt/conda/bin/python; [ -x "$PY" ] || PY="$(command -v python3 || command -v python)"
-  # Ubuntu 24.04 marks the system Python as externally-managed (PEP 668), so root pip installs need
-  # --break-system-packages. Pass it as an env var (only new pip reads it; Kaggle/Colab old pip
-  # ignores it) so the runner stays untouched.
-  export PIP_BREAK_SYSTEM_PACKAGES=1
-  sudo --preserve-env=GH_PAT,GEO_WORK,GEO_REPO,PIP_BREAK_SYSTEM_PACKAGES "$PY" "$GEO_REPO/kaggle/run_change_probe.py"
-  sudo chmod -R a+rX "$GEO_WORK"
+  # Run inside a venv created with --system-site-packages: the preinstalled CUDA torch stays visible
+  # from the system, but everything the runner pip-installs (claymodel, torchgeo, huggingface_hub)
+  # lands in the user-owned venv. This sidesteps both PEP 668 (24.04 system Python is externally
+  # managed) and "cannot uninstall <apt-installed package>" errors — and needs no sudo. The runner
+  # uses sys.executable, so launching it with the venv python keeps every sub-install in the venv.
+  BASEPY=/opt/conda/bin/python; [ -x "$BASEPY" ] || BASEPY="$(command -v python3 || command -v python)"
+  "$BASEPY" -m venv --system-site-packages "$GEO_WORK/venv"
+  "$GEO_WORK/venv/bin/python" "$GEO_REPO/kaggle/run_change_probe.py"
 '
 
 # --- 4) fetch results ---------------------------------------------------------------------------
