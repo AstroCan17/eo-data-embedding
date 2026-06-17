@@ -24,10 +24,12 @@ SPOT="${SPOT:-1}"                       # 1 = cheap preemptible Spot VM; ok for 
 OUT_DIR="${OUT_DIR:-gcp/_out}"
 GH_REPO="github.com/AstroCan17/geo-embed-eo-cdk.git"
 BRANCH="${BRANCH:-main}"                 # which branch the VM clones (override to test a PR branch)
-# Deep Learning VM: CUDA driver + PyTorch preinstalled, so no driver wrangling. Google renames
-# these families over time (the old `pytorch-latest-gpu` is gone); pin a current one and override
-# via $IMG_FAMILY if it ages out (list with: gcloud compute images list --project deeplearning-platform-release).
-IMG_FAMILY="${IMG_FAMILY:-pytorch-2-9-cu129-ubuntu-2204-nvidia-580}"
+# Deep Learning VM: CUDA driver + PyTorch preinstalled, so no driver wrangling. Must be Ubuntu
+# 24.04 (Python 3.12): claymodel needs py>=3.11, so the 22.04 image (py3.10) installs a broken
+# `UNKNOWN-0.0.0` instead of claymodel. Google renames these families over time (the old
+# `pytorch-latest-gpu` is gone); override via $IMG_FAMILY if it ages out
+# (list: gcloud compute images list --project deeplearning-platform-release).
+IMG_FAMILY="${IMG_FAMILY:-pytorch-2-9-cu129-ubuntu-2404-nvidia-580}"
 IMG_PROJECT="deeplearning-platform-release"
 
 [ -n "${GH_PAT:-}" ] || { echo "ERROR: set GH_PAT (a GitHub PAT with repo read access)"; exit 1; }
@@ -79,7 +81,11 @@ gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" --command '
   # Run the runner as root so its pip install goes system-wide, next to torch. (conda is absent here;
   # the conda branch is kept for other DL images.)
   PY=/opt/conda/bin/python; [ -x "$PY" ] || PY="$(command -v python3 || command -v python)"
-  sudo --preserve-env=GH_PAT,GEO_WORK,GEO_REPO "$PY" "$GEO_REPO/kaggle/run_change_probe.py"
+  # Ubuntu 24.04 marks the system Python as externally-managed (PEP 668), so root pip installs need
+  # --break-system-packages. Pass it as an env var (only new pip reads it; Kaggle/Colab old pip
+  # ignores it) so the runner stays untouched.
+  export PIP_BREAK_SYSTEM_PACKAGES=1
+  sudo --preserve-env=GH_PAT,GEO_WORK,GEO_REPO,PIP_BREAK_SYSTEM_PACKAGES "$PY" "$GEO_REPO/kaggle/run_change_probe.py"
   sudo chmod -R a+rX "$GEO_WORK"
 '
 
