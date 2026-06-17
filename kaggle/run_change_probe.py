@@ -53,9 +53,7 @@ def read_token():
     cands = sorted(os.path.join(r, fn) for r, _, fs in os.walk(INPUT) for fn in fs)
     print(f"+ input files: {[c[len(INPUT) :] for c in cands][:30]}", flush=True)
     if not cands:
-        raise SystemExit(
-            f"no PAT: set $GH_PAT, or attach candenizkaya/gh-pat under {INPUT} (Kaggle)"
-        )
+        raise SystemExit(f"no PAT: set $GH_PAT, or attach candenizkaya/gh-pat under {INPUT} (Kaggle)")
     # prefer a file whose path looks like a token, else fall back to the first file
     pat_file = max(cands, key=lambda p: any(k in p.lower() for k in ("pat", "token", "gh")))
     with open(pat_file) as fh:
