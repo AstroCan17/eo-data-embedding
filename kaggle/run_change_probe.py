@@ -83,7 +83,9 @@ else:
     )
 del token
 
-# 1) Clay (pinned) + torchgeo for the OSCD loader
+# 1) Clay (pinned) + torchgeo for the OSCD loader + huggingface_hub for the checkpoint download.
+# huggingface_hub ships in the Kaggle/Colab images but not on a bare GCP Deep Learning VM, so pin
+# it explicitly (no-op where already present).
 sh(
     sys.executable,
     "-m",
@@ -92,6 +94,7 @@ sh(
     "-q",
     f"git+https://github.com/Clay-foundation/model.git@{CLAY_COMMIT}",
     "torchgeo>=0.6",
+    "huggingface_hub",
 )
 
 # 2) Clay band metadata.yaml (wavelengths / means / stds), same pinned commit

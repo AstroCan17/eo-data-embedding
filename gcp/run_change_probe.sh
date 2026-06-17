@@ -23,8 +23,11 @@ VM="${VM:-change-probe-$(date +%s 2>/dev/null || echo run)}"
 SPOT="${SPOT:-1}"                       # 1 = cheap preemptible Spot VM; ok for a short job
 OUT_DIR="${OUT_DIR:-gcp/_out}"
 GH_REPO="github.com/AstroCan17/geo-embed-eo-cdk.git"
-# Deep Learning VM: CUDA driver + PyTorch preinstalled, so no driver wrangling.
-IMG_FAMILY="${IMG_FAMILY:-pytorch-latest-gpu}"
+BRANCH="${BRANCH:-main}"                 # which branch the VM clones (override to test a PR branch)
+# Deep Learning VM: CUDA driver + PyTorch preinstalled, so no driver wrangling. Google renames
+# these families over time (the old `pytorch-latest-gpu` is gone); pin a current one and override
+# via $IMG_FAMILY if it ages out (list with: gcloud compute images list --project deeplearning-platform-release).
+IMG_FAMILY="${IMG_FAMILY:-pytorch-2-9-cu129-ubuntu-2204-nvidia-580}"
 IMG_PROJECT="deeplearning-platform-release"
 
 [ -n "${GH_PAT:-}" ] || { echo "ERROR: set GH_PAT (a GitHub PAT with repo read access)"; exit 1; }
@@ -70,8 +73,12 @@ gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" --command '
   export GH_PAT="$(cat "$HOME/.ghpat")"; rm -f "$HOME/.ghpat"
   export GEO_WORK="$HOME/work" GEO_REPO="$HOME/work/repo"
   mkdir -p "$GEO_WORK"
-  git clone --depth 1 -b main "https://x-access-token:${GH_PAT}@'"$GH_REPO"'" "$GEO_REPO" 2>/dev/null
-  python "$GEO_REPO/kaggle/run_change_probe.py"
+  git clone --depth 1 -b '"$BRANCH"' "https://x-access-token:${GH_PAT}@'"$GH_REPO"'" "$GEO_REPO" 2>/dev/null
+  # Deep Learning VM keeps torch in conda; a non-interactive SSH shell has no "python" on PATH and
+  # the system python3 lacks torch. Prefer the conda interpreter; the runner propagates it via
+  # sys.executable to its pip install + subprocesses.
+  PY=/opt/conda/bin/python; [ -x "$PY" ] || PY="$(command -v python3 || command -v python)"
+  "$PY" "$GEO_REPO/kaggle/run_change_probe.py"
 '
 
 # --- 4) fetch results ---------------------------------------------------------------------------
