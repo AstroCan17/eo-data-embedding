@@ -74,11 +74,13 @@ gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" --command '
   export GEO_WORK="$HOME/work" GEO_REPO="$HOME/work/repo"
   mkdir -p "$GEO_WORK"
   git clone --depth 1 -b '"$BRANCH"' "https://x-access-token:${GH_PAT}@'"$GH_REPO"'" "$GEO_REPO" 2>/dev/null
-  # Deep Learning VM keeps torch in conda; a non-interactive SSH shell has no "python" on PATH and
-  # the system python3 lacks torch. Prefer the conda interpreter; the runner propagates it via
-  # sys.executable to its pip install + subprocesses.
+  # On this DL VM torch lives in the system dist-packages (root-owned, not writable by the login
+  # user), so a plain `pip install` silently lands in ~/.local and the runner can not import it.
+  # Run the runner as root so its pip install goes system-wide, next to torch. (conda is absent here;
+  # the conda branch is kept for other DL images.)
   PY=/opt/conda/bin/python; [ -x "$PY" ] || PY="$(command -v python3 || command -v python)"
-  "$PY" "$GEO_REPO/kaggle/run_change_probe.py"
+  sudo --preserve-env=GH_PAT,GEO_WORK,GEO_REPO "$PY" "$GEO_REPO/kaggle/run_change_probe.py"
+  sudo chmod -R a+rX "$GEO_WORK"
 '
 
 # --- 4) fetch results ---------------------------------------------------------------------------
