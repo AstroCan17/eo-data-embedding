@@ -38,3 +38,4 @@ configs/clay/metadata.yaml
 # Kaggle scratch
 kaggle/_payload/
 kaggle/_out/
+kaggle/_pull/
