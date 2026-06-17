@@ -82,6 +82,10 @@ gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" --command '
   # managed) and "cannot uninstall <apt-installed package>" errors — and needs no sudo. The runner
   # uses sys.executable, so launching it with the venv python keeps every sub-install in the venv.
   BASEPY=/opt/conda/bin/python; [ -x "$BASEPY" ] || BASEPY="$(command -v python3 || command -v python)"
+  # The distro python ships venv without ensurepip; install the matching python3.X-venv package.
+  PYV="$("$BASEPY" -c "import sys; print(f\"{sys.version_info.major}.{sys.version_info.minor}\")")"
+  sudo apt-get install -y -q "python${PYV}-venv" >/dev/null 2>&1 \
+    || { sudo apt-get update -qq && sudo apt-get install -y -q "python${PYV}-venv" >/dev/null; }
   "$BASEPY" -m venv --system-site-packages "$GEO_WORK/venv"
   "$GEO_WORK/venv/bin/python" "$GEO_REPO/kaggle/run_change_probe.py"
 '
