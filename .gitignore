@@ -39,3 +39,6 @@ configs/clay/metadata.yaml
 kaggle/_payload/
 kaggle/_out/
 kaggle/_pull/
+
+# GCP scratch
+gcp/_out/
