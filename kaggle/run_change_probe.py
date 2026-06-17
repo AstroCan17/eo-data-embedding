@@ -1,16 +1,26 @@
 #!/usr/bin/env python
-"""Kaggle GPU kernel entry — phase 5b change probe on frozen Clay over OSCD.
+"""GPU runner for phase 5b change probe on frozen Clay over OSCD (Kaggle or Colab).
 
 Runs the two follow-up paths from research/06 (patch-token distance maps + supervised Δembedding
 probe) on a real GPU, since the encoder needs CUDA. The repo is cloned at run time from GitHub
-(main branch) using a PAT supplied by the private `gh-pat` Kaggle dataset, so no source is uploaded
-to Kaggle. Clay (pinned commit), its band metadata, the v1.5 checkpoint, and the OSCD zips
-(verified HF mirror) are all fetched here with internet enabled.
+(main branch) using a PAT, so no source is uploaded to the runner. Clay (pinned commit), its band
+metadata, the v1.5 checkpoint, and the OSCD zips (verified HF mirror) are all fetched here with
+internet enabled.
 
-Push with `kaggle/push.sh` (see kaggle/README.md). Output: /kaggle/working/change_probe_results.md.
+Platform-agnostic by design — one file, two runners:
+  * Kaggle: push with `kaggle/push.sh`; the PAT comes from the private `gh-pat` dataset and paths
+    default to /kaggle/working.
+  * Colab: see `colab/change_probe.ipynb`; set the PAT via the `GH_PAT` env var (from Colab
+    Secrets) and clone the repo to `GEO_REPO` before invoking this file.
+
+Resolution order (env wins, Kaggle defaults otherwise):
+  * token  : $GH_PAT / $GITHUB_TOKEN  ->  scan files under $GEO_INPUT (default /kaggle/input)
+  * repo   : $GEO_REPO (reused if it already exists, so Colab can pre-clone)  ->  clone here
+  * workdir: $GEO_WORK  ->  /kaggle/working if present  ->  current directory
+
+Output: <workdir>/change_probe_results.md.
 """
 
-import glob
 import json
 import os
 import subprocess
@@ -19,8 +29,9 @@ import urllib.request
 
 CLAY_COMMIT = "f14e698f3c237cabf8d28dec669a362d66625381"  # same pin as the Dockerfile
 GH_REPO = "github.com/AstroCan17/geo-embed-eo-cdk.git"
-REPO = "/kaggle/working/repo"
-WORK = "/kaggle/working"
+INPUT = os.environ.get("GEO_INPUT", "/kaggle/input")
+WORK = os.environ.get("GEO_WORK") or ("/kaggle/working" if os.path.isdir("/kaggle/working") else os.getcwd())
+REPO = os.environ.get("GEO_REPO") or os.path.join(WORK, "repo")
 
 
 def sh(*args, env=None):
@@ -28,27 +39,48 @@ def sh(*args, env=None):
     subprocess.run(list(args), check=True, env=env)
 
 
-# 0) read the GitHub PAT from the private gh-pat dataset and clone main (token never printed)
-cands = sorted(glob.glob("/kaggle/input/gh-pat/*"))
-if not cands:
-    raise SystemExit("gh-pat dataset not mounted or empty — attach candenizkaya/gh-pat")
-with open(cands[0]) as fh:
-    raw = fh.read().strip()
-try:
-    parsed = json.loads(raw)
-    token = parsed.get("token") or parsed.get("pat") or parsed.get("GITHUB_TOKEN")
-except (ValueError, AttributeError):
-    token = raw
-if not token:
-    raise SystemExit(f"no token found in {cands[0]}")
+def read_token():
+    """Return the GitHub PAT: env var first (Colab/local), else scan mounted datasets (Kaggle)."""
+    env_tok = os.environ.get("GH_PAT") or os.environ.get("GITHUB_TOKEN")
+    if env_tok:
+        print("+ using PAT from $GH_PAT/$GITHUB_TOKEN (token hidden)", flush=True)
+        return env_tok.strip()
+    # Kaggle path: scan ALL mounted datasets so this works regardless of the mount folder name
+    # (Kaggle's mount dir doesn't always equal the slug), and so hidden files (.env/.token) are
+    # found — glob("*") would skip dotfiles.
+    mounted = sorted(os.listdir(INPUT)) if os.path.isdir(INPUT) else []
+    print(f"+ mounted datasets: {mounted}", flush=True)
+    cands = sorted(os.path.join(r, fn) for r, _, fs in os.walk(INPUT) for fn in fs)
+    print(f"+ input files: {[c[len(INPUT) :] for c in cands][:30]}", flush=True)
+    if not cands:
+        raise SystemExit(f"no PAT: set $GH_PAT, or attach candenizkaya/gh-pat under {INPUT} (Kaggle)")
+    # prefer a file whose path looks like a token, else fall back to the first file
+    pat_file = max(cands, key=lambda p: any(k in p.lower() for k in ("pat", "token", "gh")))
+    with open(pat_file) as fh:
+        raw = fh.read().strip()
+    try:
+        parsed = json.loads(raw)
+        tok = parsed.get("token") or parsed.get("pat") or parsed.get("GITHUB_TOKEN")
+    except (ValueError, AttributeError):
+        tok = raw
+    if not tok:
+        raise SystemExit(f"no token found in {pat_file}")
+    return tok
 
-print(f"+ git clone --depth 1 -b main https://github.com/{GH_REPO} (token hidden)", flush=True)
-subprocess.run(
-    ["git", "clone", "--depth", "1", "-b", "main", f"https://x-access-token:{token}@{GH_REPO}", REPO],
-    check=True,
-    stdout=subprocess.DEVNULL,
-    stderr=subprocess.DEVNULL,
-)
+
+# 0) read the GitHub PAT and clone main (token never printed). Skip the clone if REPO already
+# exists — lets Colab pre-clone into $GEO_REPO and reuse it.
+token = read_token()
+if os.path.isdir(os.path.join(REPO, ".git")):
+    print(f"+ reusing existing repo at {REPO}", flush=True)
+else:
+    print(f"+ git clone --depth 1 -b main https://github.com/{GH_REPO} -> {REPO} (token hidden)", flush=True)
+    subprocess.run(
+        ["git", "clone", "--depth", "1", "-b", "main", f"https://x-access-token:{token}@{GH_REPO}", REPO],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 del token
 
 # 1) Clay (pinned) + torchgeo for the OSCD loader

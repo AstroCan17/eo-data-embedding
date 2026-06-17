@@ -1,7 +1,9 @@
-# Kaggle GPU run — phase 5b change probe
+# GPU run — phase 5b change probe (Kaggle or Colab)
 
 The Clay encoder needs CUDA, so the change-detection follow-ups (patch-token distance maps +
-supervised Δembedding probe, see `research/06-change-analysis.md` §5) run as a Kaggle GPU kernel.
+supervised Δembedding probe, see `research/06-change-analysis.md` §5) run on a GPU. The runner
+(`run_change_probe.py`) is platform-agnostic — use **Kaggle** (below) or **Colab**
+(`colab/change_probe.ipynb`) when the Kaggle GPU quota is busy with another project.
 
 ## What's here
 
@@ -14,12 +16,15 @@ supervised Δembedding probe, see `research/06-change-analysis.md` §5) run as a
 
 ## Prerequisites
 
-- Private Kaggle dataset **`candenizkaya/gh-pat`** holding a GitHub PAT with read access to the
-  repo. The script auto-detects the file (first file in the mount) and accepts plain text or JSON
-  (`{"token": "..."}` / `pat` / `GITHUB_TOKEN`).
-- The change-probe code must be on `main` (merge the PR first) — the kernel clones `-b main`.
+- A GitHub PAT with read access to the repo, supplied one of two ways:
+  - **Kaggle:** private dataset **`candenizkaya/gh-pat`**. The runner scans every mounted dataset
+    (mount-name-agnostic, dotfiles included), prefers a file whose name looks like a token, and
+    accepts plain text or JSON (`{"token": "..."}` / `pat` / `GITHUB_TOKEN`).
+  - **Colab / local:** the `GH_PAT` (or `GITHUB_TOKEN`) env var — takes priority over dataset
+    scanning. On Colab set it from a Secret; see `colab/change_probe.ipynb`.
+- The change-probe code must be on `main` (merge the PR first) — both runners clone `-b main`.
 
-## Run
+## Run on Kaggle
 
 ```bash
 kaggle/push.sh                                              # push kernel
@@ -29,6 +34,12 @@ kaggle kernels output candenizkaya/geo-embed-eo-change-probe -p kaggle/_out   # 
 
 Then copy the metrics table from `kaggle/_out/change_probe_results.md` into
 `research/06-change-analysis.md` and the README. The kernel is private.
+
+## Run on Colab
+
+Open `colab/change_probe.ipynb`, pick a GPU runtime, add a `GH_PAT` Colab Secret, and run all
+cells. Results land at `/content/change_probe_results.md` (rendered inline by the last cell).
+Same code, separate GPU pool — handy when the Kaggle weekly quota is reserved for another project.
 
 ## Notes
 
