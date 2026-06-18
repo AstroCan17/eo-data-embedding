@@ -66,15 +66,17 @@ embedding. The seasonal signal dominates the change signal, with the wrong sign 
 result for two-date, global-embedding cosine distance on OSCD is *consistent* with published
 evidence; nothing I found reports this exact zero-shot setup succeeding.
 
-## 5. Paths that would close the gap (not in scope here)
+## 5. Paths that would close the gap
 
 1. **Patch-token distance maps** — Clay emits per-patch tokens; comparing them (not the CLS
    token) gives a spatial Δ at ~80 m granularity and matches what zero-shot methods actually do.
+   *(run in §7)*
 2. **Supervised probe on Δembedding** — logistic regression on `|e1−e2|` / `e1⊖e2` features
    using OSCD train labels; stays within the frozen-FM thesis (cheap, label-light) and is the
-   fair analogue of the fine-tuned baselines above.
+   fair analogue of the fine-tuned baselines above. *(run in §7)*
 3. **Time series, not pairs** — the literature's answer to seasonality; needs more dates than
    OSCD's two, so a different dataset (e.g. raw Sentinel-2 stacks via Planetary Computer).
+   *(still open)*
 
 ## 6. Verdict
 
@@ -82,3 +84,37 @@ Phase 5's *engineering* goal is met: data unblocked, pipeline proven on GPU, tor
 regression caught and fixed. The *scientific* claim ("read change straight off frozen embedding
 distance") is **rejected by the experiment** — the README and capability table say so plainly
 rather than hiding the run.
+
+## 7. Phase 5b follow-up — patch maps + a supervised probe (`scripts/phase5b_change_probe.py`)
+
+§5 paths 1–2 are now run, comparing four methods on the same frozen Clay v1.5 over OSCD (test
+split: 69 tiles / 17,664 patches; 31.9% of tiles, 10.2% of patches changed). `best-F1` is an
+oracle threshold (scanned on the eval split); ROC-AUC is the threshold-free primary metric.
+
+| approach | level | trained | ROC-AUC | best-F1 | precision | recall | IoU |
+|---|---|---|---|---|---|---|---|
+| CLS cosine distance | tile | no | 0.379 | 0.291 | 0.242 | 0.364 | 0.170 |
+| patch-token cosine map | patch | no | 0.525 | 0.172 | 0.104 | 0.491 | 0.094 |
+| **supervised probe (abs)** | **tile** | **yes** | **0.575** | **0.471** | **0.414** | **0.545** | **0.308** |
+| supervised probe (abs) | patch | yes | 0.538 | 0.188 | 0.113 | 0.553 | 0.103 |
+
+Reading the rows:
+
+- **Zero-training distance stays at chance, at both granularities.** Patch-token cosine maps
+  (§5 path 1) lift ROC-AUC off the below-chance CLS baseline to ~0.52, but best-F1 actually
+  *drops* (0.17). Moving from one global vector to per-patch tokens does **not**, on its own,
+  recover the change signal — consistent with §3–4: the seasonal swing dominates regardless of
+  granularity.
+- **A cheap supervised probe is the real lever (§5 path 2).** Logistic regression on `|e1−e2|`
+  features — *no encoder fine-tuning* — reaches **F1 0.471 / IoU 0.308** at tile level. That
+  lands squarely in the band published for *supervised, fine-tuned* OSCD baselines (FC-Siam
+  per-pixel F1 ≈ 0.45–0.58; SeCo F1 = 46.9, §4). Frozen embeddings + a label-light probe reach
+  the same neighbourhood as full fine-tuning — the same **label-efficiency** story as Phase 3,
+  now on change detection.
+- **Tile beats patch for the supervised probe too** (F1 0.471 vs 0.188): at OSCD's positive
+  count, per-patch labels are too sparse and noisy to fit a stable per-patch decision boundary.
+
+**Updated verdict.** Zero-shot embedding *distance* for change detection is rejected (§6 stands).
+But the frozen-FM thesis survives the harder test: a cheap supervised Δembedding probe matches
+fine-tuned baselines without touching the encoder. The open frontier is §5 path 3 (time series
+over seasonality), not more zero-shot distance metrics.

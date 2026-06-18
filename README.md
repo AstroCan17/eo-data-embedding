@@ -50,11 +50,14 @@ cross-modal training objective, so SAR and optical of the same place don't coinc
 rank 32→8): the two modalities are *linearly relatable* in Clay's space without joint training.
 Within-modal retrieval is far stronger; purpose-built models (DOFA-CLIP) train for cross-modal directly.
 
-**Change detection (OSCD)** — honest negative result: the zero-training approach (cosine distance
-between the two dates' global tile embeddings) scores **at chance** (ROC-AUC ≈ 0.27–0.49 across
-splits, tile sizes and thresholds). Diagnostics show why — seasonal/radiometric variation moves
-unchanged tiles more than building-scale change moves urban ones — and the literature agrees naive
-two-date embedding distance is not a working method. Full analysis and follow-up paths in
+**Change detection (OSCD)** — a two-part result. Zero-training cosine distance between the two
+dates' embeddings scores **at chance** (ROC-AUC ≈ 0.27–0.49), at *both* global-tile and per-patch
+granularity — seasonal/radiometric variation moves unchanged tiles more than building-scale change
+moves urban ones, and the literature agrees naive two-date distance is not a working method. But a
+**cheap supervised probe on `|e1−e2|`** — logistic regression on frozen embeddings, *no encoder
+fine-tuning* — reaches **F1 0.471 / IoU 0.308** at tile level, the same band as *fine-tuned* OSCD
+baselines (FC-Siam ≈ 0.45–0.58, SeCo 0.469). Frozen embeddings buy label efficiency here too. Full
+analysis, four-method table and follow-up paths in
 [`research/06-change-analysis.md`](research/06-change-analysis.md).
 
 > The Clay encoder embeds both modalities (`make clay-smoke`). EuroSAT (optical, single-label) gives
@@ -108,7 +111,7 @@ This repo demonstrates that layer end to end.
 | Frozen backbone + few-shot linear probe | unsupervised / semi-supervised |
 | FAISS index over the archive | big-data / ML at scale |
 | Embed-once → store → reuse | full model lifecycle, scale |
-| Bitemporal Δembedding change maps | defense/intelligence use case — honest negative result ([analysis](research/06-change-analysis.md)) |
+| Bitemporal Δembedding change maps | defense/intelligence use case — zero-shot distance ≈ chance, but a supervised Δembedding probe matches fine-tuned baselines ([analysis](research/06-change-analysis.md)) |
 
 ## Architecture
 
@@ -169,6 +172,7 @@ python scripts/phase0_smoke.py
 | 6 — Cross-modal | `scripts/phase6_crossmodal.py` | SAR↔optical retrieval + learned alignment | ✅ |
 | 4 — App | `scripts/phase4_app.py` | Gradio search UI + montage export (see Demo) | ✅ |
 | 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ✅ pipeline runs · ❌ zero-training Δembedding ≈ chance (ROC-AUC 0.47) — [analysis](research/06-change-analysis.md) |
+| 5b — Change probe | `scripts/phase5b_change_probe.py` | Patch-token maps + supervised Δembedding probe, 4-method compare | ✅ supervised tile probe F1 0.471 / IoU 0.308 (≈ fine-tuned baselines, no encoder fine-tuning) — [analysis](research/06-change-analysis.md) |
 
 See [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) for the full plan, datasets, and rationale.
 

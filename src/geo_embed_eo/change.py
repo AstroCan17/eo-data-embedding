@@ -54,16 +54,19 @@ def delta_features(e1: np.ndarray, e2: np.ndarray, kind: str = "abs") -> np.ndar
 
 
 def tile_image(img, size: int = 256):
-    """Reflect-pad a (C,H,W) image to multiples of `size` and return tiles (N,C,size,size)."""
+    """Pad a (C,H,W) image to multiples of `size` and return tiles (N,C,size,size).
+
+    Uses reflect padding when possible; reflect requires each pad amount < its dimension, so
+    scenes too small for that (e.g. OSCD test scenes shorter than one tile) fall back to
+    replicate (edge) padding, which has no such limit.
+    """
     import torch
     import torch.nn.functional as F
 
     C, H, W = img.shape
-    if size > H or size > W:
-        # reflect padding requires pad < dim; smaller scenes need a smaller tile size
-        raise ValueError(f"image ({H}x{W}) is smaller than the tile size ({size})")
     ph, pw = (size - H % size) % size, (size - W % size) % size
-    img = F.pad(img.unsqueeze(0), (0, pw, 0, ph), mode="reflect")[0]
+    mode = "reflect" if ph < H and pw < W else "replicate"
+    img = F.pad(img.unsqueeze(0), (0, pw, 0, ph), mode=mode)[0]
     rows, cols = img.shape[1] // size, img.shape[2] // size
     tiles = [
         img[:, r * size : (r + 1) * size, c * size : (c + 1) * size] for r in range(rows) for c in range(cols)
