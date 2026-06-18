@@ -118,3 +118,53 @@ Reading the rows:
 But the frozen-FM thesis survives the harder test: a cheap supervised Δembedding probe matches
 fine-tuned baselines without touching the encoder. The open frontier is §5 path 3 (time series
 over seasonality), not more zero-shot distance metrics.
+
+## 8. Why seasonality is the wall — and why it can't be normalized away
+
+It is tempting to "fix" seasonality with radiometric normalization (histogram matching between the
+two dates). That treats only half the problem. Seasonality in a bitemporal pair has **two layers**:
+
+1. **Radiometric / spectral** — sun angle, atmosphere, sensor gain. *Same scene, different
+   lighting.* This **is** normalizable: histogram matching or per-scene standardization removes it.
+2. **Phenological / structural** — the ground cover itself changes between seasons. Vegetation is
+   lush in the wet season and sparse in the dry one; soil becomes exposed, canopy texture and
+   shadows shift. This is **not** a colour shift to correct — it is genuinely different content, and
+   no normalization recovers it.
+
+OSCD pairs are months-to-years apart, so the dominant nuisance is **layer 2**, the one normalization
+cannot touch. This reframes the whole result cleanly:
+
+- It explains why **zero-shot distance fails**: the encoder faithfully reports the large phenological
+  difference, which the task wants *ignored*, while the small built-structure change it wants
+  *detected* barely moves the embedding (§3 — and below 0.5, the wrong sign entirely).
+- It explains why the **supervised probe partially works** (§7): given labels, it learns
+  "phenological difference ≠ change, structural difference = change" — the only honest way to
+  separate the two layers — but OSCD has too few positives to learn it well.
+- It sets the bar for any real fix: it must attack **layer 2**, which a single date-pair cannot.
+
+## 9. Where this stops, and what comes next
+
+**Where it stops (honestly).** With OSCD (two dates), a frozen encoder, and the compute actually
+available (one GPU slot, in practice CPU — see [`07-engineering-notes.md`](07-engineering-notes.md)),
+the phenological layer cannot be resolved: two dates give no way to tell a normal seasonal swing
+from a real change. This is a genuine limit of the setup, not an unfinished experiment — and the
+literature (§4) reaches the same conclusion, which is why working systems move to time series.
+
+**Next steps**, each tied to the layer-2 problem and to published method:
+
+1. **Time series over a season, not a pair.** Model a location's embedding trajectory across many
+   dates (periodic regression / change-point detection); real change is a departure from the
+   seasonal cycle. This is the literature's answer — SeCo's motivation, Element84's periodic-outlier
+   approach, [OPTIMUS](https://arxiv.org/abs/2506.13902)'s change-point framing. **Needs multi-date
+   data**, which OSCD does not provide.
+2. **A seasonally-invariant encoder.** Swap or compare against a backbone pretrained with
+   seasonal-contrast objectives (SeCo, CaCo) so phenology is suppressed *in the embedding* rather
+   than learned around downstream. Tests whether the frozen-FM thesis holds with a better-matched FM.
+3. **A dataset built for multi-date change.** [SpaceNet 7](https://spacenet.ai/sn7-challenge/)
+   (monthly mosaics with building-change labels) and DynamicEarthNet (daily Planet imagery, monthly
+   semantic labels) both supply the temporal depth and the labels that OSCD lacks.
+
+**Why these aren't done here.** Each needs either an accelerator we couldn't secure on the trial
+quota (§ engineering notes) or a new data pipeline beyond this project's scope. They are scoped as
+explicit follow-on work, with the method and data already identified — not left as vague "future
+work."

@@ -56,9 +56,14 @@ granularity — seasonal/radiometric variation moves unchanged tiles more than b
 moves urban ones, and the literature agrees naive two-date distance is not a working method. But a
 **cheap supervised probe on `|e1−e2|`** — logistic regression on frozen embeddings, *no encoder
 fine-tuning* — reaches **F1 0.471 / IoU 0.308** at tile level, the same band as *fine-tuned* OSCD
-baselines (FC-Siam ≈ 0.45–0.58, SeCo 0.469). Frozen embeddings buy label efficiency here too. Full
-analysis, four-method table and follow-up paths in
-[`research/06-change-analysis.md`](research/06-change-analysis.md).
+baselines (FC-Siam ≈ 0.45–0.58, SeCo 0.469). Frozen embeddings buy label efficiency here too. The
+remaining wall is **phenological seasonality** (vegetation genuinely changes between seasons — not a
+colour shift to normalize away), which a two-date dataset can't resolve; the honest fix is a time
+series, scoped as explicit follow-on work. Full analysis, four-method table, the two-layer
+seasonality argument and next steps in
+[`research/06-change-analysis.md`](research/06-change-analysis.md); the cloud-infra story (10
+environment fixes, the GPU quota wall, the CPU pivot) is in
+[`research/07-engineering-notes.md`](research/07-engineering-notes.md).
 
 > The Clay encoder embeds both modalities (`make clay-smoke`). EuroSAT (optical, single-label) gives
 > the clean probe headline; SSL4EO-S12 (streamed S1+S2) gives the cross-modal result above — no 120 GB
@@ -217,7 +222,11 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full dev setup and the phase �
 
 Before building, read the decision records in [`research/`](research/) — especially
 [`research/01-datasets.md`](research/01-datasets.md), which justifies every dataset choice
-(specs, licenses, and which phase it serves) against the project's capability goals.
+(specs, licenses, and which phase it serves) against the project's capability goals. The change-
+detection write-up [`research/06-change-analysis.md`](research/06-change-analysis.md) is the most
+detailed result (honest negative + supervised probe + where it stops and why), and
+[`research/07-engineering-notes.md`](research/07-engineering-notes.md) records the cloud-infra
+debugging behind getting it to run.
 
 ## License
 

@@ -3,6 +3,30 @@
 All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Phase 5b change probe** (`scripts/phase5b_change_probe.py`): the two follow-ups from
+  `research/06` §5 — patch-token distance maps and a supervised Δembedding probe — in a four-method
+  comparison on frozen Clay v1.5 over OSCD.
+- **Portable change-probe runner** (`kaggle/run_change_probe.py`, `colab/`, `gcp/run_change_probe.sh`):
+  one file, three platforms (Kaggle / Colab / GCP), with a `DEVICE=cpu` mode that runs without any
+  GPU quota. The GCP wrapper provisions → runs → tears down the VM on every exit.
+- **`research/06` §7–9**: phase 5b results, the two-layer (spectral vs phenological) seasonality
+  argument, and scoped next steps (time series, seasonal-invariant encoder, multi-date datasets).
+- **`research/07-engineering-notes.md`**: the cloud-run story — ten environment fixes, the GPU
+  capacity/quota wall (`GPUS_ALL_REGIONS=1`, 1→2 denied), the CPU pivot, and the tiling bug.
+
+### Results
+- Zero-training distance stays at chance at both tile and patch granularity, but a **supervised
+  Δembedding probe reaches tile F1 0.471 / IoU 0.308** — the band of *fine-tuned* OSCD baselines
+  (FC-Siam ≈ 0.45–0.58, SeCo 0.469), with no encoder fine-tuning.
+
+### Fixed
+- `change.tile_image()` no longer rejects scenes smaller than one tile (e.g. OSCD's 241×385 test
+  scene): the check now matches the real reflect-padding constraint and falls back to replicate
+  padding for tiny scenes.
+
 ## [0.1.0] — 2026-06-09
 
 First working release: a multi-modal geospatial embedding pipeline on the Clay v1.5 ViT foundation
