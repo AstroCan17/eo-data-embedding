@@ -122,7 +122,7 @@ sh(
     "--checkpoint",
     ckpt,
     "--device",
-    "cuda",
+    os.environ.get("GEO_DEVICE", "cuda"),
     "--root",
     oscd_root,
     "--out",

@@ -21,6 +21,10 @@ PROJECT="${PROJECT:-$(gcloud config get-value project 2>/dev/null)}"
 ZONES="${ZONES:-${ZONE:-europe-west4-a europe-west4-b europe-west4-c europe-west1-b europe-west1-c europe-west1-d}}"
 MACHINE="${MACHINE:-n1-standard-4}"
 GPU="${GPU:-nvidia-tesla-t4}"
+# cuda = attach a GPU accelerator (needs GPUS_ALL_REGIONS quota); cpu = plain VM, no accelerator,
+# runs the probe on CPU. Use cpu when the single GPU slot is taken or quota can't be raised — the
+# CUDA torch in the image imports fine on a GPU-less VM and just runs on CPU.
+DEVICE="${DEVICE:-cuda}"
 VM="${VM:-change-probe-$(date +%s 2>/dev/null || echo run)}"
 SPOT="${SPOT:-1}"                       # 1 = cheap preemptible Spot VM; ok for a short job
 OUT_DIR="${OUT_DIR:-gcp/_out}"
@@ -43,6 +47,11 @@ IMG_PROJECT="deeplearning-platform-release"
 spot_flags=()
 [ "$SPOT" = "1" ] && spot_flags=(--provisioning-model=SPOT --instance-termination-action=DELETE)
 
+# GPU-only flags: a CPU run attaches no accelerator and needs no driver, so it skips the GPU quota.
+gpu_flags=()
+[ "$DEVICE" = "cuda" ] && gpu_flags=(--accelerator "type=$GPU,count=1" \
+  --maintenance-policy TERMINATE --metadata install-nvidia-driver=True)
+
 ZONE=""   # set once a zone accepts the VM; cleanup keys off it
 cleanup() {
   [ -n "$ZONE" ] || return 0
@@ -53,21 +62,19 @@ trap cleanup EXIT
 
 # --- 1) provision (try zones until one has GPU capacity) ----------------------------------------
 for z in $ZONES; do
-  echo "+ creating GPU VM $VM ($GPU, $MACHINE, $z, spot=$SPOT) ..."
+  echo "+ creating $DEVICE VM $VM ($MACHINE, $z, spot=$SPOT${gpu_flags:+, $GPU}) ..."
   if gcloud compute instances create "$VM" \
       --project "$PROJECT" --zone "$z" \
       --machine-type "$MACHINE" \
-      --accelerator "type=$GPU,count=1" \
       --image-family "$IMG_FAMILY" --image-project "$IMG_PROJECT" \
-      --maintenance-policy TERMINATE \
-      --metadata install-nvidia-driver=True \
       --boot-disk-size 100GB \
+      "${gpu_flags[@]}" \
       "${spot_flags[@]}"; then
     ZONE="$z"; break
   fi
   echo "+ zone $z has no capacity, trying next ..."
 done
-[ -n "$ZONE" ] || { echo "ERROR: no GPU capacity in any of: $ZONES"; exit 1; }
+[ -n "$ZONE" ] || { echo "ERROR: no capacity in any of: $ZONES"; exit 1; }
 
 # wait until SSH is reachable (driver install on first boot can take a couple of minutes)
 echo "+ waiting for SSH ..."
@@ -82,11 +89,11 @@ printf '%s' "$GH_PAT" | gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJ
   --command 'umask 077; cat > "$HOME/.ghpat"'
 
 # --- 3) run the same portable runner ------------------------------------------------------------
-echo "+ running change probe on GPU ..."
+echo "+ running change probe on $DEVICE ..."
 gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" "${SSH_OPTS[@]}" --command '
   set -e
   export GH_PAT="$(cat "$HOME/.ghpat")"; rm -f "$HOME/.ghpat"
-  export GEO_WORK="$HOME/work" GEO_REPO="$HOME/work/repo"
+  export GEO_WORK="$HOME/work" GEO_REPO="$HOME/work/repo" GEO_DEVICE='"$DEVICE"'
   mkdir -p "$GEO_WORK"
   git clone --depth 1 -b '"$BRANCH"' "https://x-access-token:${GH_PAT}@'"$GH_REPO"'" "$GEO_REPO" 2>/dev/null
   # Run inside a venv created with --system-site-packages: the preinstalled CUDA torch stays visible
