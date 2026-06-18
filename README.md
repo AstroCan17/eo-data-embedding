@@ -8,8 +8,8 @@ Turn massive Earth-observation archives into **queryable, actionable intelligenc
 pretrained **vision-transformer foundation model**. Embed **Sentinel-2 (optical) + Sentinel-1 (SAR)**
 imagery, then do similarity search, few-shot classification, and change detection on the embeddings.
 
-> A small, working replica of the modern EO-foundation-model + embeddings stack.
-> I **use** a pretrained ViT (Clay / Prithvi) — I do not train one from scratch.
+> A working, reproducible implementation of the modern EO-foundation-model + embeddings stack,
+> built on a pretrained ViT (Clay / Prithvi) — no training from scratch, as production EO teams operate.
 
 ## Results
 
@@ -80,7 +80,7 @@ S1 GRD-vs-RTC offset note in [`research/05-crossmodal.md`](research/05-crossmoda
   0.92 macro-F1, but it is a known train/inference distribution mismatch, accepted for simplicity.
 - **GSD semantics after upsampling.** EuroSAT's 64×64 @ 10 m patches are bilinearly upsampled to
   Clay's 256×256 input while `gsd=10` is passed to the position encoding. After upsampling the
-  effective pixel spacing is 2.5 m, but the content is still a 640 m footprint — I keep `gsd=10`
+  effective pixel spacing is 2.5 m, but the content is still a 640 m footprint — the pipeline keeps `gsd=10`
   to describe the sensor, not the resampled grid. A native-64 vs upsampled-256 ablation is open.
 - **Class token as *the* embedding.** `embed.py` uses Clay's cls token; mean-pooled patch tokens
   are a known alternative (open question in [`research/02`](research/02-foundation-models.md)) and

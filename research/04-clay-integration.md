@@ -32,7 +32,7 @@ emb = encoder(datacube)[0][:, 0, :]   # (B, 1024)
 Pixels are normalized `(x - mean) / std` with stats reshaped `[1, C, 1, 1]`.
 
 **Architecture constants:** image size **256**, patch size 8, embed dim **1024**, 24 layers / 16 heads,
-75% mask ratio (masking is irrelevant for frozen inference; I read the cls token).
+75% mask ratio (masking is irrelevant for frozen inference; the cls token is read).
 
 ## 2. Verified band metadata (`configs/metadata.yaml`)
 
@@ -86,16 +86,16 @@ Dockerfile only.
 ## 5. Verify-at-runtime caveats (isolated in code, easy to flip)
 - **`time` / `latlon` shape — RESOLVED:** Clay v1.5 (git main) expects **`[B, 4]`** each
   (time = week sin/cos + hour sin/cos; latlon = lat sin/cos + lon sin/cos). Passing `[B,2]` makes the
-  metadata encoding 4 dims short (`patches 1024` vs `pos_metadata 1020`). I pass **zeros([B,4])**
-  (time/location-agnostic embeddings — fine for within-dataset similarity + probe).
-- **Encoder path:** I use `model.model.encoder` with a `getattr` fallback to `model.encoder`.
+  metadata encoding 4 dims short (`patches 1024` vs `pos_metadata 1020`). The implementation passes
+  **zeros([B,4])** (time/location-agnostic embeddings — fine for within-dataset similarity + probe).
+- **Encoder path:** the encoder is accessed via `model.model.encoder` with a `getattr` fallback to `model.encoder`.
 - **TorchGeo band order:** assert is on channel **count** (14); confirm the S2 ordering for the
   installed TorchGeo version — adjust `BEN_S2_TO_CLAY` if it differs.
 - **S1 product mismatch:** Clay stats are **RTC**; BigEarthNet S1 is **GRD** sigma0 (dB). Both are dB
   backscatter, so the normalization is close but not identical — documented and acceptable.
   (For a purist run, recompute S1 mean/std on the subset.)
-- **Multi-label → primary class:** BigEarthNet is multi-label; I reduce to argmax for the single-label
-  few-shot probe. A multi-label probe is a possible upgrade.
+- **Multi-label → primary class:** BigEarthNet is multi-label; targets are reduced to argmax for the
+  single-label few-shot probe. A multi-label probe is a possible upgrade.
 
 ## Sources
 - [Clay Basic Use](https://clay-foundation.github.io/model/getting-started/basic_use.html) ·
