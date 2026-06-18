@@ -24,6 +24,9 @@ SPOT="${SPOT:-1}"                       # 1 = cheap preemptible Spot VM; ok for 
 OUT_DIR="${OUT_DIR:-gcp/_out}"
 GH_REPO="github.com/AstroCan17/geo-embed-eo-cdk.git"
 BRANCH="${BRANCH:-main}"                 # which branch the VM clones (override to test a PR branch)
+# SSH keepalive: if the VM dies mid-command (e.g. a Spot preemption), drop the dead connection in
+# ~2 min instead of hanging forever on the TCP timeout.
+SSH_OPTS=(--ssh-flag="-o ServerAliveInterval=30" --ssh-flag="-o ServerAliveCountMax=4" --ssh-flag="-o ConnectTimeout=30")
 # Deep Learning VM: CUDA driver + PyTorch preinstalled, so no driver wrangling. Must be Ubuntu
 # 24.04 (Python 3.12): claymodel needs py>=3.11, so the 22.04 image (py3.10) installs a broken
 # `UNKNOWN-0.0.0` instead of claymodel. Google renames these families over time (the old
@@ -59,18 +62,18 @@ gcloud compute instances create "$VM" \
 # wait until SSH is reachable (driver install on first boot can take a couple of minutes)
 echo "+ waiting for SSH ..."
 for i in $(seq 1 30); do
-  gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" --command "true" 2>/dev/null && break
+  gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" "${SSH_OPTS[@]}" --command "true" 2>/dev/null && break
   sleep 10
 done
 
 # --- 2) hand the token over out-of-band (never on the command line) -----------------------------
 echo "+ transferring PAT (hidden) ..."
-printf '%s' "$GH_PAT" | gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" \
+printf '%s' "$GH_PAT" | gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" "${SSH_OPTS[@]}" \
   --command 'umask 077; cat > "$HOME/.ghpat"'
 
 # --- 3) run the same portable runner ------------------------------------------------------------
 echo "+ running change probe on GPU ..."
-gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" --command '
+gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" "${SSH_OPTS[@]}" --command '
   set -e
   export GH_PAT="$(cat "$HOME/.ghpat")"; rm -f "$HOME/.ghpat"
   export GEO_WORK="$HOME/work" GEO_REPO="$HOME/work/repo"
