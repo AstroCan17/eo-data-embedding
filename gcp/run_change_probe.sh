@@ -16,7 +16,9 @@ set -euo pipefail
 
 # --- config (override via env) ------------------------------------------------------------------
 PROJECT="${PROJECT:-$(gcloud config get-value project 2>/dev/null)}"
-ZONE="${ZONE:-europe-west4-a}"          # T4 availability + EU region
+# Try several T4-capable EU zones in order — GPU capacity is per-zone and often exhausted in one.
+# Set ZONES (space-separated) or a single ZONE to override.
+ZONES="${ZONES:-${ZONE:-europe-west4-a europe-west4-b europe-west4-c europe-west1-b europe-west1-c europe-west1-d}}"
 MACHINE="${MACHINE:-n1-standard-4}"
 GPU="${GPU:-nvidia-tesla-t4}"
 VM="${VM:-change-probe-$(date +%s 2>/dev/null || echo run)}"
@@ -41,23 +43,31 @@ IMG_PROJECT="deeplearning-platform-release"
 spot_flags=()
 [ "$SPOT" = "1" ] && spot_flags=(--provisioning-model=SPOT --instance-termination-action=DELETE)
 
+ZONE=""   # set once a zone accepts the VM; cleanup keys off it
 cleanup() {
+  [ -n "$ZONE" ] || return 0
   echo "+ deleting VM $VM (cleanup) ..."
   gcloud compute instances delete "$VM" --zone "$ZONE" --project "$PROJECT" --quiet 2>/dev/null || true
 }
 trap cleanup EXIT
 
-# --- 1) provision -------------------------------------------------------------------------------
-echo "+ creating GPU VM $VM ($GPU, $MACHINE, $ZONE, spot=$SPOT) ..."
-gcloud compute instances create "$VM" \
-  --project "$PROJECT" --zone "$ZONE" \
-  --machine-type "$MACHINE" \
-  --accelerator "type=$GPU,count=1" \
-  --image-family "$IMG_FAMILY" --image-project "$IMG_PROJECT" \
-  --maintenance-policy TERMINATE \
-  --metadata install-nvidia-driver=True \
-  --boot-disk-size 100GB \
-  "${spot_flags[@]}"
+# --- 1) provision (try zones until one has GPU capacity) ----------------------------------------
+for z in $ZONES; do
+  echo "+ creating GPU VM $VM ($GPU, $MACHINE, $z, spot=$SPOT) ..."
+  if gcloud compute instances create "$VM" \
+      --project "$PROJECT" --zone "$z" \
+      --machine-type "$MACHINE" \
+      --accelerator "type=$GPU,count=1" \
+      --image-family "$IMG_FAMILY" --image-project "$IMG_PROJECT" \
+      --maintenance-policy TERMINATE \
+      --metadata install-nvidia-driver=True \
+      --boot-disk-size 100GB \
+      "${spot_flags[@]}"; then
+    ZONE="$z"; break
+  fi
+  echo "+ zone $z has no capacity, trying next ..."
+done
+[ -n "$ZONE" ] || { echo "ERROR: no GPU capacity in any of: $ZONES"; exit 1; }
 
 # wait until SSH is reachable (driver install on first boot can take a couple of minutes)
 echo "+ waiting for SSH ..."
