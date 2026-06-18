@@ -47,7 +47,7 @@ embedding. The seasonal signal dominates the change signal, with the wrong sign 
   [arXiv:1810.08468](https://arxiv.org/abs/1810.08468)). SSL-pretrained encoders *fine-tuned*
   on OSCD land in the same region — SeCo reports F1 = 46.9
   ([arXiv:2103.16607](https://arxiv.org/pdf/2103.16607)). OSCD is small, imbalanced and hard.
-- **Seasonal variation dominating embeddings is a documented failure mode**, not my discovery:
+- **Seasonal variation dominating embeddings is a documented failure mode**, not a novel finding here:
   it is the founding motivation of SeCo (seasonal-contrast pretraining) and CaCo
   ([arXiv:2405.20462](https://arxiv.org/pdf/2405.20462) discussion), i.e. generic SSL/FM
   embeddings are *not* seasonally invariant by default.
@@ -64,7 +64,7 @@ embedding. The seasonal signal dominates the change signal, with the wrong sign 
 
 **Conclusion:** the ~0.7 expectation in issue #6 had no literature support. A chance-level
 result for two-date, global-embedding cosine distance on OSCD is *consistent* with published
-evidence; nothing I found reports this exact zero-shot setup succeeding.
+evidence; no surveyed source reports this exact zero-shot setup succeeding.
 
 ## 5. Paths that would close the gap
 
@@ -138,13 +138,13 @@ cannot touch. This reframes the whole result cleanly:
   difference, which the task wants *ignored*, while the small built-structure change it wants
   *detected* barely moves the embedding (§3 — and below 0.5, the wrong sign entirely).
 - It explains why the **supervised probe partially works** (§7): given labels, it learns
-  "phenological difference ≠ change, structural difference = change" — the only honest way to
+  "phenological difference ≠ change, structural difference = change" — the only reliable way to
   separate the two layers — but OSCD has too few positives to learn it well.
 - It sets the bar for any real fix: it must attack **layer 2**, which a single date-pair cannot.
 
 ## 9. Where this stops, and what comes next
 
-**Where it stops (honestly).** With OSCD (two dates), a frozen encoder, and the compute actually
+**Where it stops.** With OSCD (two dates), a frozen encoder, and the compute actually
 available (one GPU slot, in practice CPU — see [`07-engineering-notes.md`](07-engineering-notes.md)),
 the phenological layer cannot be resolved: two dates give no way to tell a normal seasonal swing
 from a real change. This is a genuine limit of the setup, not an unfinished experiment — and the

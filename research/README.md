@@ -15,6 +15,6 @@ each phase so the *why* behind every choice is traceable and defensible.
 
 ## Principle
 
-I **use** pretrained geospatial foundation models and **open** datasets — I do not train a
-foundation model from scratch. Every dataset is chosen to prove one specific capability the
-project targets (see the plan in [`../docs/PROJECT_PLAN.md`](../docs/PROJECT_PLAN.md)).
+This project **uses** pretrained geospatial foundation models and **open** datasets — no
+foundation model is trained from scratch. Every dataset is chosen to prove one specific capability
+the project targets (see the plan in [`../docs/PROJECT_PLAN.md`](../docs/PROJECT_PLAN.md)).

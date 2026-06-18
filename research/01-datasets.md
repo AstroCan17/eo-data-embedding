@@ -1,32 +1,32 @@
 # Research 01 — Open-Source EO Datasets: What, Why, and How
 
-**Goal of this note.** Decide *which* open Earth-observation datasets I use, *why* each one,
+**Goal of this note.** Document *which* open Earth-observation datasets are used, *why* each one,
 and *which project phase* it serves. All specs below are verified against primary sources
-(links at the end). Every number here is one I can defend in a technical discussion.
+(links at the end); every number is verified and defensible in technical discussion.
 
 ---
 
 ## 1. Selection criteria
 
 A dataset earns a place in this project only if it helps prove a capability the project sets
-out to demonstrate. Concretely, I score candidates on:
+out to demonstrate. Concretely, candidates are scored on:
 
 1. **Multi-modal** — does it pair **Sentinel-1 (SAR)** with **Sentinel-2 (optical/MSI)**?
    The EO + MSI + SAR combination is the project's core claim. Single-modality sets are only
    useful as fast baselines.
-2. **Label availability** — do I get labels for the **few-shot / semi-supervised** story?
-   I need *some* labels to show "50 labels ≈ a CNN trained on thousands".
+2. **Label availability** — does it provide labels for the **few-shot / semi-supervised** story?
+   Some labels are required to show "50 labels ≈ a CNN trained on thousands".
 3. **Scale** — is there a large unlabeled corpus to populate an embedding index ("ML at scale")?
 4. **Tooling** — is it one call away in **TorchGeo / HuggingFace**? Friction kills momentum.
 5. **Licensing** — permissive enough to publish a public repo against it.
 6. **Task fit** — classification (probe), retrieval (search), or change detection (stretch)?
 
-No single dataset satisfies all six — so I use a small **set of datasets**, each for a
+No single dataset satisfies all six — so a small **set of datasets** is used, each for a
 specific job. The table in §4 is the result.
 
 ---
 
-## 2. Datasets I use
+## 2. Selected datasets
 
 ### 2.1 EuroSAT — *the Phase-0 sanity / fast baseline*
 - **What:** Land-use/land-cover classification benchmark from Sentinel-2.
@@ -34,7 +34,7 @@ specific job. The table in §4 is the result.
   **64×64 px** · **10 m** GSD · **13 spectral bands** (an RGB variant also exists).
 - **License:** **MIT** (code/dataset) — fully publishable.
 - **Access:** `torchgeo.datasets.EuroSAT` (auto-download ~90 MB), also HuggingFace `timm/eurosat-rgb`.
-- **Why I use it:** Small enough to run on **CPU/Colab in seconds** → perfect for the Phase-0
+- **Rationale:** Small enough to run on **CPU/Colab in seconds** → perfect for the Phase-0
   end-to-end pipeline check (image → frozen ViT → embedding → assert shape) and as a quick
   linear-probe baseline before committing P40 time to the big multi-modal set.
 - **Limitation:** Single-modality (optical only), tiny tiles. Not the multi-modal hero — a warm-up.
@@ -46,10 +46,10 @@ specific job. The table in §4 is the result.
   acquired Jun 2017–May 2018 over **10 European countries**.
 - **License:** **CDLA-Permissive 1.0** (Community Data License Agreement) — publishable.
 - **Access:** `torchgeo.datasets.BigEarthNet` (supports `s1`, `s2`, or both); BIFOLD HF mirrors.
-- **Why I use it:** This is the **core dataset**. It is genuinely **multi-modal (SAR+optical)** and
+- **Rationale:** This is the **core dataset**. It is genuinely **multi-modal (SAR+optical)** and
   **labeled**, so it carries both the headline stories: (a) **multi-modal embedding** extraction and
   retrieval, and (b) the **few-shot linear probe** (5/20/50 labels per class vs a full-label CNN).
-- **How I use it:** I take a **few-thousand-patch subset** (NOT the full 549k) — enough to make
+- **Usage:** A **few-thousand-patch subset** (NOT the full 549k) is used — enough to make
   the point, small enough to embed once on the P40 in fp32.
 
 ### 2.3 SSL4EO-S12 (v1.1) — *the unlabeled "scale" corpus*
@@ -60,10 +60,10 @@ specific job. The table in §4 is the result.
   land-cover and vegetation modalities.
 - **License:** **CC-BY-4.0** (v1.1).
 - **Access:** HuggingFace `embed2scale/SSL4EO-S12-v1.1`; GitHub `zhu-xlab/SSL4EO-S12`.
-- **Why I use it:** Optional but valuable — a big **unlabeled** pool to grow the FAISS index and
+- **Rationale:** Optional but valuable — a big **unlabeled** pool to grow the FAISS index and
   tell the "embedding search **at scale**" story without needing labels. Also reinforces the
   **self/semi-supervised** narrative (it's *the* dataset MoCo/DINO/MAE EO models pretrain on).
-- **How I use it:** Sample a slice for the index; I am not pretraining, just embedding + indexing.
+- **Usage:** A slice is sampled for the index — no pretraining, only embedding + indexing.
 
 ### 2.4 Major TOM — *the shortcut + the "this is exactly the industry playbook" reference*
 - **What:** ESA Φ-lab + CloudFerro effort: the largest ML-ready Sentinel datasets, **plus
@@ -72,10 +72,11 @@ specific job. The table in §4 is the result.
   with several models (SSL4EO, DINOv2, SigLIP). Global coverage.
 - **License:** open / free on HuggingFace (`Major-TOM/*`) — check per-subset card.
 - **Access:** HuggingFace `Major-TOM/Core-S2L2A`, `Core-S1RTC`, `Core-S2RGB-DINOv2`, etc.
-- **Why I use it:** Two roles. (1) **Fallback/shortcut** — if foundation-model plumbing eats too
-  much time, I can pull **precomputed embeddings** and demo FAISS search immediately. (2)
+- **Rationale:** Two roles. (1) **Fallback/shortcut** — if foundation-model plumbing consumes too
+  much time, **precomputed embeddings** can be pulled to demo FAISS search immediately. (2)
   **Narrative anchor** — Major TOM *is* the open-world version of what leading EO companies build
-  internally (global embeddings for browse/search). Citing it shows I understand the field.
+  internally (global embeddings for browse/search), and referencing it demonstrates familiarity
+  with current industry practice.
 
 ### 2.5 OSCD (Onera Satellite Change Detection) — *the change-detection stretch*
 - **What:** Bitemporal **change-detection** benchmark on Sentinel-2 with pixel-level ground truth.
@@ -87,23 +88,23 @@ specific job. The table in §4 is the result.
   own downloader points at the IMT file shares, whose Train-Labels host goes offline for long
   stretches — `scripts/fetch_oscd.py` pulls the same three zips (MD5-verified byte-identical)
   from the HF mirror `hkristen/oscd` instead.
-- **Why I use it:** The **defense/intelligence use case** in miniature — "what changed here".
-  I embed each date and threshold the **embedding distance** to produce a change map. It also
-  lets the **perspective-geometry** strength show (the pairs must be co-registered).
-- **Note:** Small (24 pairs) → great for a stretch demo, not for training; perfect for my
+- **Rationale:** The **defense/intelligence use case** — "what changed here".
+  Each date is embedded and the **embedding distance** thresholded to produce a change map. It also
+  exercises the **perspective-geometry** angle (the pairs must be co-registered).
+- **Note:** Small (24 pairs) → suited to a stretch demo, not training; a good fit for the
   zero-training, embedding-distance approach.
 
 ### 2.6 SpaceNet 6 — *optional, ties to the object-detection background*
 - **What:** Multi-sensor **SAR + optical** dataset over Rotterdam with building footprints.
-- **Why (maybe):** If I want to extend the pipeline toward **object detection** (SAR building
+- **Why (maybe):** A path to extend the pipeline toward **object detection** (SAR building
   extraction). **Deferred** — adds scope; OSCD already covers SAR-adjacent change.
 
 ---
 
-## 3. What I am explicitly NOT doing
+## 3. Explicitly out of scope
 - ❌ Downloading full BigEarthNet (549k) — a few-thousand-patch subset proves the point.
-- ❌ Pretraining on SSL4EO-S12 — I *use* pretrained models; SSL4EO is just an index corpus.
-- ❌ Training any change-detection network on OSCD — I use **zero-shot embedding distance**.
+- ❌ Pretraining on SSL4EO-S12 — pretrained models are used; SSL4EO serves only as an index corpus.
+- ❌ Training any change-detection network on OSCD — **zero-shot embedding distance** is used.
 - ❌ Chasing SOTA numbers — the deliverable is a working, well-reasoned pipeline + one clean table.
 
 ---
@@ -124,7 +125,7 @@ specific job. The table in §4 is the result.
 ## 5. Phase-0 decision (what this note unblocks)
 
 **Phase 0 uses EuroSAT** (or a synthetic tensor for the no-download path). Rationale:
-- I am validating the **pipeline plumbing**, not the science — so smallest, fastest, MIT-licensed wins.
+- Phase 0 validates the **pipeline plumbing**, not the science — so smallest, fastest, MIT-licensed wins.
 - It exercises the exact code path (`data → embedder → embedding → shape/finiteness asserts`) that
   Phase 1 scales up with BigEarthNet + a real foundation model.
 - It runs anywhere (CPU/Colab), so "day-0 green light" doesn't depend on GPU access.

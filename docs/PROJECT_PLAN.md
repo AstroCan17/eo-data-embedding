@@ -1,6 +1,6 @@
 # Project Plan — Multi-Modal Geospatial Embedding Search & Change Detection
 
-**Purpose:** Build a small, working replica of what production EO teams do: turn massive EO archives into queryable, actionable intelligence via a vision-transformer foundation model + embeddings.
+**Purpose:** A working, reproducible reference implementation of what production EO teams do: turn large EO archives into queryable, actionable intelligence via a vision-transformer foundation model and embeddings.
 
 **Technical scope:** geospatial embeddings · vision transformers · multi-modal EO/MSI/SAR · unsupervised/semi-supervised · big-data/ML at scale · full model lifecycle (curation → analysis → deployment) · perspective geometry (co-registration).
 
@@ -9,10 +9,10 @@
 
 ---
 
-## Core thesis (what I'm proving)
+## Core thesis
 
-> Use a **pretrained ViT geospatial foundation model** (I do NOT train one from scratch — neither do production EO teams day-to-day) to embed **Sentinel-2 (optical) + Sentinel-1 (SAR)** imagery, then:
-> 1. **Similarity search** (FAISS): "find scenes/objects like this across the archive" — the actionable-intelligence play in miniature.
+> Use a **pretrained ViT geospatial foundation model** (pretrained, not trained from scratch — as production EO teams operate day-to-day) to embed **Sentinel-2 (optical) + Sentinel-1 (SAR)** imagery, then:
+> 1. **Similarity search** (FAISS): "find scenes/objects like this across the archive" — the core actionable-intelligence capability.
 > 2. **Few-shot linear probe** on frozen embeddings: match a fully-supervised CNN with ~50× fewer labels — proves the embedding/foundation-model value prop + semi-supervised.
 > 3. **Embedding-distance change detection** (OSCD bitemporal pairs): "what changed" — the defense/intelligence use case.
 
@@ -72,7 +72,7 @@ PyTorch · **TorchGeo** (datasets + pretrained weights + samplers) · HuggingFac
 - Frozen ViT → embeddings; write `embeddings.parquet` (id, modality, vector, labels).
 - fp32 on P40 (Pascal fp16 is slow); batch 64–128 × 224². Decoupled store = experiment cheaply afterward.
 
-### Phase 2 — Similarity search (½ day) — *the demo's star*
+### Phase 2 — Similarity search (½ day) — *the primary demonstration*
 - Build FAISS index; query → top-N nearest scenes; visual grid output.
 - Show cross-modal angle: query optical, also index SAR (and vice-versa) → "multi-modal retrieval".
 

@@ -24,7 +24,7 @@ Phase 0 is wasted effort.
 
 ### D1 — Sanity backbone = timm ViT, **not** Clay
 Use `vit_small_patch16_224` (timm, frozen, `num_classes=0`) as the Phase-0 encoder.
-**Why:** it implements the same `encode(x) -> (B, D)` contract with zero integration cost. I validate
+**Why:** it implements the same `encode(x) -> (B, D)` contract with zero integration cost. This validates
 the *wiring* (shapes, finiteness, the store, FAISS, the probe) before paying the Clay datacube tax.
 Clay's real value (multi-band + SAR) is a Phase-1 concern.
 
