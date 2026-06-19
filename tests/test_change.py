@@ -24,10 +24,13 @@ def test_tile_image_pads_to_grid():
     assert tiles.shape == (4, 3, 256, 256)  # padded to 512x512 -> 2x2
 
 
-def test_tile_image_rejects_too_small_images():
-    img = torch.zeros(3, 200, 300)  # H < tile size — reflect pad would fail
-    with pytest.raises(ValueError, match="smaller than the tile size"):
-        change.tile_image(img, size=256)
+def test_tile_image_handles_scene_smaller_than_a_tile():
+    # OSCD's smallest scenes are shorter than one 256-tile. Reflect padding can't pad by
+    # >= a dimension's length, so tile_image falls back to replicate padding instead of
+    # raising — the scene is padded up to a single tile.
+    img = torch.zeros(3, 100, 120)
+    tiles = change.tile_image(img, size=256)
+    assert tiles.shape == (1, 3, 256, 256)
 
 
 def test_tile_mask_labels():
