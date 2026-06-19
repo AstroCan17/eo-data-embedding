@@ -1,6 +1,6 @@
 import torch
 
-from geo_embed_eo.embed import ViTEmbedder
+from eo_data_embedding.embed import ViTEmbedder
 
 
 def test_vit_embedder_shape_and_finite():

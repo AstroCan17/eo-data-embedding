@@ -1,6 +1,6 @@
-# Default configuration for geo-embed-eo.
+# Default configuration for eo-data-embedding.
 # Phase scripts read their argparse *defaults* from here (CLI flags still override).
-# Loaded via geo_embed_eo.config.load_config().
+# Loaded via eo_data_embedding.config.load_config().
 
 model:
   name: clay # clay | prithvi | timm-vit (sanity/baseline)

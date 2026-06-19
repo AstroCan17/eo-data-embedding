@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from geo_embed_eo import change
+from eo_data_embedding import change
 
 
 def test_change_score_cosine_identical_is_zero(rng):

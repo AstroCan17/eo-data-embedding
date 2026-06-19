@@ -28,7 +28,7 @@ DEVICE="${DEVICE:-cuda}"
 VM="${VM:-change-probe-$(date +%s 2>/dev/null || echo run)}"
 SPOT="${SPOT:-1}"                       # 1 = cheap preemptible Spot VM; ok for a short job
 OUT_DIR="${OUT_DIR:-gcp/_out}"
-GH_REPO="github.com/AstroCan17/geo-embed-eo-cdk.git"
+GH_REPO="github.com/AstroCan17/eo-data-embedding.git"
 BRANCH="${BRANCH:-main}"                 # which branch the VM clones (override to test a PR branch)
 # SSH keepalive: if the VM dies mid-command (e.g. a Spot preemption), drop the dead connection in
 # ~2 min instead of hanging forever on the TCP timeout.

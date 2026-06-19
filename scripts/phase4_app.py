@@ -18,8 +18,8 @@ from pathlib import Path
 
 import numpy as np
 
-from geo_embed_eo.config import cfg_get, load_config
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.config import cfg_get, load_config
+from eo_data_embedding.log import get_logger
 
 log = get_logger("app")
 
@@ -27,7 +27,7 @@ log = get_logger("app")
 def _load():
     from torchgeo.datasets import EuroSAT
 
-    from geo_embed_eo import search, store
+    from eo_data_embedding import search, store
 
     store_path = cfg_get(load_config(), "embed.store_path", "artifacts/embeddings.parquet")
     if not Path(store_path).exists():
@@ -56,7 +56,7 @@ def _rgb(ds, eurosat_idx, size=96):
 
 
 def _neighbours(index, X, pos, k):
-    from geo_embed_eo import search
+    from eo_data_embedding import search
 
     _, I = search.search(index, X[pos : pos + 1], top_k=k + 1)
     return [int(j) for j in I[0] if int(j) != pos][:k]
@@ -103,8 +103,10 @@ def serve():
         gallery = [(_rgb(ds, ids[j], 128), classes[labels[j]]) for j in neigh]
         return query, gallery, f"Query class: {classes[labels[pos]]}"
 
-    with gr.Blocks(title="geo-embed-eo · similarity search") as demo:
-        gr.Markdown("# geo-embed-eo — find scenes like this\nFrozen Clay embeddings + FAISS over EuroSAT.")
+    with gr.Blocks(title="eo-data-embedding · similarity search") as demo:
+        gr.Markdown(
+            "# eo-data-embedding — find scenes like this\nFrozen Clay embeddings + FAISS over EuroSAT."
+        )
         with gr.Row():
             pos = gr.Slider(0, len(X) - 1, value=0, step=1, label="query tile #")
             k = gr.Slider(3, 12, value=6, step=1, label="neighbours (k)")

@@ -5,8 +5,8 @@ import argparse
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-from geo_embed_eo import change, data
-from geo_embed_eo.embed import load_embedder
+from eo_data_embedding import change, data
+from eo_data_embedding.embed import load_embedder
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--root", default="data/")

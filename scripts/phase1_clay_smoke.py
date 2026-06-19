@@ -17,7 +17,7 @@ from pathlib import Path
 
 import torch
 
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.log import get_logger
 
 log = get_logger("clay-smoke")
 
@@ -31,8 +31,8 @@ def main() -> int:
     if args.checkpoint is not None and not Path(args.checkpoint).exists():
         raise FileNotFoundError(f"checkpoint not found: {args.checkpoint}")
 
-    from geo_embed_eo import clay_metadata as M
-    from geo_embed_eo.embed import load_embedder
+    from eo_data_embedding import clay_metadata as M
+    from eo_data_embedding.embed import load_embedder
 
     for modality, n_bands in (("s2", len(M.S2_BANDS)), ("s1", len(M.S1_BANDS))):
         x = torch.rand(2, n_bands, M.CLAY_IMAGE_SIZE, M.CLAY_IMAGE_SIZE)

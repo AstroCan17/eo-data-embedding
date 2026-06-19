@@ -16,7 +16,7 @@ import sys
 
 import torch
 
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.log import get_logger
 
 log = get_logger("sanity")
 
@@ -28,8 +28,8 @@ def main() -> int:
     ap.add_argument("--device", default="cpu")
     args = ap.parse_args()
 
-    from geo_embed_eo import data
-    from geo_embed_eo.embed import load_embedder
+    from eo_data_embedding import data
+    from eo_data_embedding.embed import load_embedder
 
     if args.eurosat:
         img, label = data.eurosat_sample()

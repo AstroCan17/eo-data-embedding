@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from geo_embed_eo import probe
+from eo_data_embedding import probe
 
 
 def _blobs(rng, per_class=30):

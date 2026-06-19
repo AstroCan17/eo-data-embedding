@@ -35,4 +35,4 @@ jobs:
       # Build smoke for the deployable CPU image (the GPU image + data/GPU phases
       # are intentionally not run in CI — no GPU or datasets on hosted runners).
       - name: Build CPU image
-        run: docker build -f Dockerfile.cpu -t geo-embed-eo:cpu .
+        run: docker build -f Dockerfile.cpu -t eo-data-embedding:cpu .
