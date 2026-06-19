@@ -1,6 +1,6 @@
 import numpy as np
 
-from geo_embed_eo import store
+from eo_data_embedding import store
 
 
 def test_save_load_roundtrip(tmp_path, rng):

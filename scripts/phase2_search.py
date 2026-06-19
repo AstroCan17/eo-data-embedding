@@ -16,8 +16,8 @@ from pathlib import Path
 
 import numpy as np
 
-from geo_embed_eo.config import cfg_get, load_config
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.config import cfg_get, load_config
+from eo_data_embedding.log import get_logger
 
 log = get_logger("search")
 
@@ -34,7 +34,7 @@ def main() -> int:
     if not Path(args.store).exists():
         raise FileNotFoundError(f"embedding store not found: {args.store} (run phase1_extract first)")
 
-    from geo_embed_eo import search, store
+    from eo_data_embedding import search, store
 
     df = store.load_embeddings(args.store).reset_index(drop=True)
     df = df[df["modality"] == args.modality].reset_index(drop=True)

@@ -36,7 +36,7 @@ model, end to end and reproducible.
 - **Phases 0–6** (`scripts/phase*.py`): sanity + green-light smoke gate; Clay integration smoke;
   embedding extraction; FAISS similarity search; few-shot linear probe; Gradio demo + montage
   export; OSCD change detection; SSL4EO-S12 cross-modal retrieval with a learned linear alignment.
-- **Library** (`src/geo_embed_eo/`): `embed` (timm stand-in + ClayEmbedder), `data`, `store`,
+- **Library** (`src/eo_data_embedding/`): `embed` (timm stand-in + ClayEmbedder), `data`, `store`,
   `search`, `probe`, `change`, `clay_metadata`, `config`, `log`.
 - **Reproducible Docker**: GPU image (Python 3.11, CUDA 12.1, Clay from GitHub, Clay metadata,
   SSL4EO loader, build-essential) + lightweight CPU image; `docker-compose.yml` + `Makefile`.

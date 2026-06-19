@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from geo_embed_eo import baseline
+from eo_data_embedding import baseline
 
 
 def test_build_resnet18_multispectral_forward():

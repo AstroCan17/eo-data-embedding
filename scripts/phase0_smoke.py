@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.log import get_logger
 
 log = get_logger("smoke")
 
@@ -65,8 +65,8 @@ def main() -> int:
     ap.add_argument("--device", default="cpu")
     args = ap.parse_args()
 
-    from geo_embed_eo import probe, search, store
-    from geo_embed_eo.embed import load_embedder
+    from eo_data_embedding import probe, search, store
+    from eo_data_embedding.embed import load_embedder
 
     # --- data ---
     imgs, labels = _eurosat(args.n) if args.eurosat else _synthetic(args.n)

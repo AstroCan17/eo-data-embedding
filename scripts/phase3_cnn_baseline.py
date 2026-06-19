@@ -18,8 +18,8 @@ from pathlib import Path
 
 import numpy as np
 
-from geo_embed_eo.config import cfg_get, load_config
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.config import cfg_get, load_config
+from eo_data_embedding.log import get_logger
 
 log = get_logger("cnn-baseline")
 
@@ -38,7 +38,7 @@ def main() -> int:
     ap.add_argument("--out", default="artifacts/cnn_baseline_results.md")
     args = ap.parse_args()
 
-    from geo_embed_eo import baseline, data, probe
+    from eo_data_embedding import baseline, data, probe
 
     log.info("loading EuroSAT subset (n=%d, same seed-42 subset as phase1_extract) ...", args.n)
     ds = data.eurosat_subset(root=args.root, n=args.n)

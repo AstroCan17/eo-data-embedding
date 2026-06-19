@@ -58,7 +58,7 @@ Pixels are normalized `(x - mean) / std` with stats reshaped `[1, C, 1, 1]`.
 | vv | 3.5 | -12.113 | 8.314 |
 | vh | 4.0 | -18.673 | 8.017 |
 
-Encoded as constants in [`src/geo_embed_eo/clay_metadata.py`](../src/geo_embed_eo/clay_metadata.py).
+Encoded as constants in [`src/eo_data_embedding/clay_metadata.py`](../src/eo_data_embedding/clay_metadata.py).
 
 ## 3. BigEarthNet → Clay band mapping
 
