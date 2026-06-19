@@ -1,6 +1,6 @@
 # Research Notes
 
-Decision records and background research for `geo-embed-eo`. Written before/while building
+Decision records and background research for `eo-data-embedding`. Written before/while building
 each phase so the *why* behind every choice is traceable and defensible.
 
 | Note | Topic | Status |

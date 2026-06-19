@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "geo-embed-eo"
+name = "eo-data-embedding"
 version = "0.1.0"
 description = "Multi-modal geospatial embedding search & change detection on a ViT foundation model"
 readme = "README.md"

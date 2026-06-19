@@ -24,8 +24,8 @@ from pathlib import Path
 
 import numpy as np
 
-from geo_embed_eo.config import cfg_get, load_config
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.config import cfg_get, load_config
+from eo_data_embedding.log import get_logger
 
 log = get_logger("change-probe")
 SEED = 0
@@ -145,8 +145,8 @@ def main() -> int:
     if args.checkpoint is not None and not Path(args.checkpoint).exists():
         raise FileNotFoundError(f"checkpoint not found: {args.checkpoint}")
 
-    from geo_embed_eo import change, data
-    from geo_embed_eo.embed import load_embedder
+    from eo_data_embedding import change, data
+    from eo_data_embedding.embed import load_embedder
 
     embedder = load_embedder("clay", modality="s2", checkpoint=args.checkpoint, device=args.device)
 

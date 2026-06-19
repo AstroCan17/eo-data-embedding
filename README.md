@@ -1,6 +1,6 @@
-# geo-embed-eo — Multi-Modal Geospatial Embedding Search & Change Detection
+# Multi-Modal Geospatial Embedding Search & Change Detection
 
-[![CI](https://github.com/cosmicdynamix/geo-embed-eo/actions/workflows/ci.yml/badge.svg)](https://github.com/cosmicdynamix/geo-embed-eo/actions/workflows/ci.yml)
+[![CI](https://github.com/AstroCan17/eo-data-embedding/actions/workflows/ci.yml/badge.svg)](https://github.com/AstroCan17/eo-data-embedding/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -193,7 +193,7 @@ Clay v1 (first choice) · Prithvi-EO-2.0 (IBM–NASA) · SatMAE++ · DOFA/TerraM
 ## Layout
 
 ```
-src/geo_embed_eo/   # library: data, embed, store, search, probe, change
+src/eo_data_embedding/   # library: data, embed, store, search, probe, change
 scripts/            # phaseN runnable entrypoints
 configs/            # yaml config
 research/           # decision records: dataset & model rationale (start here)

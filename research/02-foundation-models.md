@@ -87,7 +87,7 @@ All phases consume embeddings, not models. So each backbone is wrapped to expose
 encode(images, meta) -> Tensor of shape (B, D)   # D = 1024 for Clay
 ```
 
-- **Phase 0 (sanity):** a timm ViT stand-in already implements this (`src/geo_embed_eo/embed.py`).
+- **Phase 0 (sanity):** a timm ViT stand-in already implements this (`src/eo_data_embedding/embed.py`).
 - **Phase 1 (real):** add a `ClayEmbedder` that loads Clay v1.5, builds the datacube (pixels + waves +
   gsd + time + latlon), runs the **frozen** encoder, and **mean-pools patch tokens (or takes the class
   token)** → `(B, 1024)`. Same signature → Phases 2–5 need zero changes.

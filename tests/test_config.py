@@ -1,4 +1,4 @@
-from geo_embed_eo.config import cfg_get, load_config
+from eo_data_embedding.config import cfg_get, load_config
 
 
 def test_load_config_missing_file_returns_empty(tmp_path):

@@ -21,7 +21,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.log import get_logger
 
 log = get_logger("fetch-oscd")
 
@@ -43,7 +43,7 @@ def _md5(path: Path) -> str:
 
 
 def _download(url: str, dest: Path) -> None:
-    req = urllib.request.Request(url, headers={"User-Agent": "geo-embed-eo/fetch_oscd"})
+    req = urllib.request.Request(url, headers={"User-Agent": "eo-data-embedding/fetch_oscd"})
     with urllib.request.urlopen(req) as resp, open(dest, "wb") as f:
         shutil.copyfileobj(resp, f)
 

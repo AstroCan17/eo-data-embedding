@@ -19,7 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
-from geo_embed_eo.log import get_logger
+from eo_data_embedding.log import get_logger
 
 log = get_logger("xmodal")
 
@@ -47,8 +47,8 @@ def main() -> int:
     if args.checkpoint is not None and not Path(args.checkpoint).exists():
         raise FileNotFoundError(f"checkpoint not found: {args.checkpoint}")
 
-    from geo_embed_eo import data
-    from geo_embed_eo.embed import load_embedder
+    from eo_data_embedding import data
+    from eo_data_embedding.embed import load_embedder
 
     log.info(f"streaming {args.n} paired S1+S2 tiles from SSL4EO-S12 ...")
     ds = data.ssl4eo_crossmodal(n=args.n, split=args.split)

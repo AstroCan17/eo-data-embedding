@@ -1,6 +1,6 @@
 import numpy as np
 
-from geo_embed_eo import search
+from eo_data_embedding import search
 
 
 def test_self_is_nearest(rng):

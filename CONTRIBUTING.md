@@ -41,6 +41,6 @@ decision records behind each dataset/model/phase choice.
 
 ## Conventions
 - Python 3.11, ruff (lint + format), line length 110.
-- Library code in `src/geo_embed_eo/` is side-effect-free with type hints on public interfaces;
+- Library code in `src/eo_data_embedding/` is side-effect-free with type hints on public interfaces;
   heavy imports stay inside functions. Runnable scripts live in `scripts/`.
 - Branch off `main`, open a PR, keep CI green.

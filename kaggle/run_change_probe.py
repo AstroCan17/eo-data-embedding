@@ -28,7 +28,7 @@ import sys
 import urllib.request
 
 CLAY_COMMIT = "f14e698f3c237cabf8d28dec669a362d66625381"  # same pin as the Dockerfile
-GH_REPO = "github.com/AstroCan17/geo-embed-eo-cdk.git"
+GH_REPO = "github.com/AstroCan17/eo-data-embedding.git"
 INPUT = os.environ.get("GEO_INPUT", "/kaggle/input")
 WORK = os.environ.get("GEO_WORK") or ("/kaggle/working" if os.path.isdir("/kaggle/working") else os.getcwd())
 REPO = os.environ.get("GEO_REPO") or os.path.join(WORK, "repo")

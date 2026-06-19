@@ -1,4 +1,4 @@
-from geo_embed_eo import clay_metadata as M
+from eo_data_embedding import clay_metadata as M
 
 
 def test_band_map_lengths():
