@@ -5,6 +5,13 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-19
+
+### Changed
+- **Renamed the project to `eo-data-embedding`** — the import package `geo_embed_eo` →
+  `eo_data_embedding`, the distribution name, the GitHub repository slug, and the Docker image tags.
+  The README CI badge now points at the live repository (it previously referenced a stale org/slug).
+
 ### Added
 - **Phase 5b change probe** (`scripts/phase5b_change_probe.py`): the two follow-ups from
   `research/06` §5 — patch-token distance maps and a supervised Δembedding probe — in a four-method
@@ -26,6 +33,8 @@ All notable changes to this project are documented here. Format follows
 - `change.tile_image()` no longer rejects scenes smaller than one tile (e.g. OSCD's 241×385 test
   scene): the check now matches the real reflect-padding constraint and falls back to replicate
   padding for tiny scenes.
+- Realigned the `tile_image` unit test with that replicate-padding behaviour — it still asserted the
+  old `ValueError` — restoring a green test run.
 
 ## [0.1.0] — 2026-06-09
 
@@ -57,3 +66,7 @@ model, end to end and reproducible.
 - OSCD change detection runs end to end (verified HF mirror), but the zero-training Δembedding
   approach scores at chance (ROC-AUC ≈ 0.27–0.49) — see `research/06-change-analysis.md`.
 - Multi-modal BigEarthNet-MM is supported but not run (no subset distribution; ~120 GB).
+
+[Unreleased]: https://github.com/AstroCan17/eo-data-embedding/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/AstroCan17/eo-data-embedding/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/AstroCan17/eo-data-embedding/releases/tag/v0.1.0
