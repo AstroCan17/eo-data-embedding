@@ -88,30 +88,40 @@ rather than hiding the run.
 ## 7. Phase 5b follow-up — patch maps + a supervised probe (`scripts/phase5b_change_probe.py`)
 
 §5 paths 1–2 are now run, comparing four methods on the same frozen Clay v1.5 over OSCD (test
-split: 69 tiles / 17,664 patches; 31.9% of tiles, 10.2% of patches changed). `best-F1` is an
-oracle threshold (scanned on the eval split); ROC-AUC is the threshold-free primary metric.
+split: 69 tiles / 17,664 patches; 31.9% of tiles, 10.2% of patches changed). ROC-AUC is the
+threshold-free primary metric; F1/precision/recall/IoU/Kappa/accuracy are at a single operating
+point whose threshold is chosen **honestly** — on the train split for the zero-training baselines,
+and on a held-out validation slice of train for the supervised probe (which overfits its own
+training rows, so their probabilities can't calibrate a threshold). Picking on test would be an
+oracle. Kappa is added because it exposes degenerate operating points that F1 alone hides.
 
-| approach | level | trained | ROC-AUC | best-F1 | precision | recall | IoU |
-|---|---|---|---|---|---|---|---|
-| CLS cosine distance | tile | no | 0.379 | 0.291 | 0.242 | 0.364 | 0.170 |
-| patch-token cosine map | patch | no | 0.525 | 0.172 | 0.104 | 0.491 | 0.094 |
-| **supervised probe (abs)** | **tile** | **yes** | **0.575** | **0.471** | **0.414** | **0.545** | **0.308** |
-| supervised probe (abs) | patch | yes | 0.538 | 0.188 | 0.113 | 0.553 | 0.103 |
+| approach | level | trained | ROC-AUC | F1 | precision | recall | IoU | Kappa | accuracy |
+|---|---|---|---|---|---|---|---|---|---|
+| CLS cosine distance | tile | no | 0.341 | 0.425 | 0.293 | 0.773 | 0.270 | -0.069 | 0.333 |
+| patch-token cosine map | patch | no | 0.535 | 0.189 | 0.108 | 0.736 | 0.104 | 0.014 | 0.355 |
+| **supervised probe (abs)** | **tile** | **yes** | **0.640** | **0.510** | **0.448** | **0.591** | **0.342** | **0.231** | **0.638** |
+| supervised probe (abs) | patch | yes | 0.518 | 0.182 | 0.105 | 0.700 | 0.100 | 0.006 | 0.359 |
 
 Reading the rows:
 
-- **Zero-training distance stays at chance, at both granularities.** Patch-token cosine maps
-  (§5 path 1) lift ROC-AUC off the below-chance CLS baseline to ~0.52, but best-F1 actually
-  *drops* (0.17). Moving from one global vector to per-patch tokens does **not**, on its own,
-  recover the change signal — consistent with §3–4: the seasonal swing dominates regardless of
-  granularity.
+- **Zero-training distance stays at chance, at both granularities.** The CLS-cosine baseline sits
+  *below* chance (ROC-AUC 0.34, Kappa −0.069): its F1 0.425 is a mirage from a near-all-positive
+  operating point (recall 0.773), which a negative Kappa exposes as worthless. Patch-token maps
+  (§5 path 1) reach ROC-AUC ~0.52 but Kappa ≈ 0 — moving from one global vector to per-patch tokens
+  does **not**, on its own, recover the change signal — consistent with §3–4: the seasonal swing
+  dominates regardless of granularity.
 - **A cheap supervised probe is the real lever (§5 path 2).** Logistic regression on `|e1−e2|`
-  features — *no encoder fine-tuning* — reaches **F1 0.471 / IoU 0.308** at tile level. That
-  lands squarely in the band published for *supervised, fine-tuned* OSCD baselines (FC-Siam
-  per-pixel F1 ≈ 0.45–0.58; SeCo F1 = 46.9, §4). Frozen embeddings + a label-light probe reach
-  the same neighbourhood as full fine-tuning — the same **label-efficiency** story as Phase 3,
-  now on change detection.
-- **Tile beats patch for the supervised probe too** (F1 0.471 vs 0.188): at OSCD's positive
+  features — *no encoder fine-tuning* — reaches **F1 0.510 / IoU 0.342 / ROC-AUC 0.640 / Kappa 0.231**
+  at tile level, with a validation-chosen (not oracle) threshold. That lands squarely in the band
+  published for *supervised, fine-tuned* OSCD baselines (FC-Siam per-pixel F1 ≈ 0.45–0.58; SeCo
+  F1 = 46.9, §4). Frozen embeddings + a label-light probe reach the same neighbourhood as full
+  fine-tuning — the same **label-efficiency** story as Phase 3, now on change detection.
+- **Threshold selection is load-bearing.** An earlier version picked the probe's threshold on its
+  own (overfit) training probabilities; that threshold did not transfer to OSCD's held-out test
+  cities and collapsed predictions to all-negative (F1 = 0) *despite* ROC-AUC 0.64. Calibrating the
+  threshold on a held-out validation slice of train is what makes the operating point honest **and**
+  transferable — the gap between the two is exactly the oracle inflation an eval-split scan hides.
+- **Tile beats patch for the supervised probe too** (F1 0.510 vs 0.182): at OSCD's positive
   count, per-patch labels are too sparse and noisy to fit a stable per-patch decision boundary.
 
 **Updated verdict.** Zero-shot embedding *distance* for change detection is rejected (§6 stands).

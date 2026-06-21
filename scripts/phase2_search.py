@@ -77,7 +77,8 @@ def main() -> int:
     ]
     rng = np.random.default_rng(0)
     for q in rng.choice(len(y), size=min(5, len(y)), replace=False):
-        lines.append(f"- `{ids[q]}` (class {y[q]}) → {list(ids[neigh[q][:5]])}")
+        nbrs = [int(j) for j in ids[neigh[q][:5]]]
+        lines.append(f"- `{int(ids[q])}` (class {int(y[q])}) → {nbrs}")
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n")

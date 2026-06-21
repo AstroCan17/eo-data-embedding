@@ -99,22 +99,31 @@ def _extract(embedder, change, pairs, frac):
 
 
 def _probe(change, tr, te, level, feature):
-    """Fit a logistic-regression Δembedding probe on train, score the test split."""
+    """Fit a logistic-regression Δembedding probe on train, score the held-out test split.
+
+    The operating threshold is chosen on a validation slice held out from train — NOT on the rows
+    the probe was fit on. A high-dim probe overfits its own training rows (their probabilities
+    separate almost perfectly), so a threshold read off them does not transfer to test; a real
+    held-out split gives an honest, transferable operating point.
+    """
     from sklearn.linear_model import LogisticRegression
+    from sklearn.model_selection import train_test_split
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
 
     e1, e2, lbl = ("cls1", "cls2", "tile_lbl") if level == "cls" else ("pat1", "pat2", "patch_lbl")
-    x_tr = change.delta_features(tr[e1], tr[e2], kind=feature)
+    x_all = change.delta_features(tr[e1], tr[e2], kind=feature)
     x_te = change.delta_features(te[e1], te[e2], kind=feature)
+    x_fit, x_val, y_fit, y_val = train_test_split(
+        x_all, tr[lbl], test_size=0.3, random_state=SEED, stratify=tr[lbl]
+    )
     clf = make_pipeline(
         StandardScaler(),
         LogisticRegression(max_iter=2000, class_weight="balanced", random_state=SEED),
     )
-    clf.fit(x_tr, tr[lbl])
-    proba_tr = clf.predict_proba(x_tr)[:, 1]
-    proba_te = clf.predict_proba(x_te)[:, 1]
-    return _eval(change, tr[lbl], proba_tr, te[lbl], proba_te)
+    clf.fit(x_fit, y_fit)
+    thr = change.pick_threshold(y_val, clf.predict_proba(x_val)[:, 1])
+    return change.binary_change_metrics(te[lbl], clf.predict_proba(x_te)[:, 1], thr)
 
 
 def main() -> int:

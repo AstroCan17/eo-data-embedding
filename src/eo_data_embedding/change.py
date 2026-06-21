@@ -23,15 +23,16 @@ def embedding_change_score(emb_t1: np.ndarray, emb_t2: np.ndarray, metric: str =
 def pick_threshold(y_true, score) -> float:
     """Threshold on `score` that maximises F1 on this split. Pick it on the TRAIN split, then
     evaluate the held-out split at this fixed threshold — sweeping on the test split itself is an
-    oracle/optimistic operating point. Candidates are the 0.50–0.99 quantiles of `score` (the
-    change class is rare, so the operating threshold lives in the upper tail).
+    oracle/optimistic operating point. Candidates span the full 0.01–0.99 quantile range of `score`:
+    a narrow upper-tail grid can pick a threshold above every held-out score, collapsing the test
+    predictions to all-negative (F1 = 0) even when the score is discriminative (ROC-AUC > 0.5).
     """
     from sklearn.metrics import f1_score
 
     y = np.asarray(y_true).astype(int)
     s = np.asarray(score, dtype="float64")
     best_thr, best_f1 = float(np.quantile(s, 0.5)), -1.0
-    for thr in np.quantile(s, np.linspace(0.5, 0.99, 50)):
+    for thr in np.quantile(s, np.linspace(0.01, 0.99, 99)):
         f1 = f1_score(y, (s > thr).astype(int), zero_division=0)
         if f1 > best_f1:
             best_f1, best_thr = f1, float(thr)
