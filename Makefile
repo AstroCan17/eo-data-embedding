@@ -8,6 +8,7 @@
 #   make cnn-baseline  train the supervised ResNet-18 baseline (Phase 3b, needs GPU)
 #   make fetch-oscd    download the OSCD zips from the verified HF mirror (CPU-safe)
 #   make change        run Phase-5 OSCD change detection (needs ckpt; GPU recommended)
+#   make demo          plug-and-play CPU demo: download EuroSAT + bundle, serve UI on :7860
 #   make app           launch the Gradio demo (CPU image) on :7860
 #   make shell         drop into a shell in the GPU dev container
 #   make shell-cpu     shell in the CPU dev container (laptops without nvidia)
@@ -17,7 +18,7 @@
 COMPOSE ?= docker compose
 
 .PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract cnn-baseline fetch-oscd \
-        change crossmodal app gpu-check test lint fmt clean
+        change crossmodal app demo gpu-check test lint fmt clean
 
 build:
 	$(COMPOSE) build dev
@@ -57,6 +58,10 @@ crossmodal:
 
 app:
 	$(COMPOSE) up app
+
+# Plug-and-play CPU demo — no GPU, no Clay. Needs `pip install -e .` first (see README "Try it").
+demo:
+	eo-data-embedding demo
 
 gpu-check:
 	$(COMPOSE) run --rm dev python -c "import torch; print('cuda:', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else '-')"

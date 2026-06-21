@@ -137,4 +137,16 @@ sh(
     out,
     env=env,
 )
-print("done — see search_results.md in the runner output", flush=True)
+
+# Also build the demo bundle (embeddings.parquet + trained probe.npz) so it can be uploaded as the
+# GitHub Release asset that `eo-data-embedding demo` downloads. Fetch with FETCH=demo-bundle.zip.
+sh(
+    sys.executable,
+    f"{REPO}/scripts/build_demo_bundle.py",
+    "--store",
+    store,
+    "--out",
+    os.path.join(WORK, "demo-bundle.zip"),
+    env=env,
+)
+print("done — see search_results.md + demo-bundle.zip in the runner output", flush=True)

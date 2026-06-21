@@ -113,3 +113,55 @@ def full_probe(X: np.ndarray, y: np.ndarray, test_frac: float = 0.2, split_seed:
     pool, test = heldout_split(y, test_frac=test_frac, seed=split_seed)
     f1, acc = _fit_eval(X, y, pool, test)
     return {"n_train": len(pool), "n_test": len(test), "macro_f1": f1, "accuracy": acc}
+
+
+class LinearProbe:
+    """A saved linear probe applied with a pure-numpy forward pass.
+
+    Holds a fitted classifier's `coef_` (n_classes, D), `intercept_` (n_classes,) and `classes_`.
+    Storing the learned parameters (not a pickled estimator) keeps the demo bundle independent of
+    the scikit-learn version it was trained with.
+    """
+
+    def __init__(self, coef: np.ndarray, intercept: np.ndarray, classes: np.ndarray):
+        self.coef = np.asarray(coef, dtype="float64")
+        self.intercept = np.asarray(intercept, dtype="float64")
+        self.classes = np.asarray(classes)
+
+    def decision(self, X: np.ndarray) -> np.ndarray:
+        return np.asarray(X, dtype="float64") @ self.coef.T + self.intercept
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        return self.classes[np.argmax(self.decision(X), axis=1)]
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        z = self.decision(X)
+        z = z - z.max(axis=1, keepdims=True)
+        e = np.exp(z)
+        return e / e.sum(axis=1, keepdims=True)
+
+
+def train_probe(X: np.ndarray, y: np.ndarray, test_frac: float = 0.2, split_seed: int = 42):
+    """Fit the demo classifier on the train pool (the fixed held-out test set is excluded).
+
+    Returns `(clf, test_idx)` — a fitted scikit-learn LogisticRegression and the held-out indices,
+    so callers can both persist the probe and report honest accuracy on data it never saw.
+    """
+    from sklearn.linear_model import LogisticRegression
+
+    pool, test = heldout_split(y, test_frac=test_frac, seed=split_seed)
+    clf = LogisticRegression(max_iter=2000)
+    clf.fit(X[pool], y[pool])
+    return clf, test
+
+
+def save_probe(clf, path: str) -> str:
+    """Persist a fitted linear probe as a version-independent npz (coef / intercept / classes)."""
+    np.savez(path, coef=clf.coef_, intercept=clf.intercept_, classes=clf.classes_)
+    return path if path.endswith(".npz") else path + ".npz"
+
+
+def load_probe(path: str) -> LinearProbe:
+    """Load an npz probe written by `save_probe` into a numpy-only `LinearProbe`."""
+    d = np.load(path, allow_pickle=False)
+    return LinearProbe(d["coef"], d["intercept"], d["classes"])
