@@ -33,8 +33,9 @@ Protocol: fixed stratified test set (401 samples), k-shot draws from the train p
 (0.949 vs 0.920): frozen embeddings buy **label efficiency**, not supremacy — which is exactly the
 foundation-model value proposition.
 
-**Similarity search** (FAISS, no training): **precision@10 = 0.824** vs a 0.103 random-chance baseline
-— an **8× lift**. "Find scenes like this" works straight off the frozen embeddings.
+**Similarity search** (FAISS, no training): **precision@10 = 0.822** vs a 0.103 random-chance baseline
+— an **8× lift** — with **mAP@10 = 0.774** (recall@10 = 0.041, bounded by ~200 same-class tiles per
+query). "Find scenes like this" works straight off the frozen embeddings.
 
 **Cross-modal retrieval** — Sentinel-1 SAR ↔ Sentinel-2 optical (SSL4EO-S12, streamed; a SAR tile
 retrieves its own optical tile; test = 120 tiles, chance P@1 = 0.008):
@@ -55,8 +56,10 @@ dates' embeddings scores **at chance** (ROC-AUC ≈ 0.27–0.49), at *both* glob
 granularity — seasonal/radiometric variation moves unchanged tiles more than building-scale change
 moves urban ones, and the literature agrees naive two-date distance is not a working method. But a
 **cheap supervised probe on `|e1−e2|`** — logistic regression on frozen embeddings, *no encoder
-fine-tuning* — reaches **F1 0.471 / IoU 0.308** at tile level, the same band as *fine-tuned* OSCD
-baselines (FC-Siam ≈ 0.45–0.58, SeCo 0.469). Frozen embeddings buy label efficiency here too. The
+fine-tuning* — reaches **F1 0.510 / IoU 0.342 / ROC-AUC 0.640 / Kappa 0.231** at tile level, the same
+band as *fine-tuned* OSCD baselines (FC-Siam ≈ 0.45–0.58, SeCo 0.469). Its operating threshold is
+chosen on a held-out validation slice of the train split (not swept on test), so this is an honest
+operating point, not an oracle. Frozen embeddings buy label efficiency here too. The
 remaining wall is **phenological seasonality** (vegetation genuinely changes between seasons — not a
 colour shift to normalize away), which a two-date dataset can't resolve; the honest fix is a time
 series, scoped as explicit follow-on work. Full analysis, four-method table, the two-layer
@@ -88,9 +91,10 @@ S1 GRD-vs-RTC offset note in [`research/05-crossmodal.md`](research/05-crossmoda
 - **Zero `time`/`latlon` metadata.** Clay accepts "unknown" (zeros) for acquisition time and
   location; EuroSAT patches are actually georeferenced, so conditioning on real metadata is an
   available (unrun) ablation.
-- **Best-F1 in Phase 5 is an oracle threshold.** The threshold scan runs on the evaluation tiles
-  themselves; ROC-AUC is the primary, threshold-free metric. A deployed system would calibrate the
-  threshold on held-out scenes.
+- **Phase 5 (single-split) F1 is an oracle threshold.** Its threshold scan runs on the evaluation
+  tiles themselves and is labelled as an upper bound; ROC-AUC is the primary, threshold-free metric.
+  The Phase-5b supervised probe instead calibrates its threshold on a held-out validation slice of
+  the train split, so its reported F1/IoU/Kappa are an honest, transferable operating point.
 - **Exact search at demo scale.** FAISS `IndexFlatIP` over ~2k vectors is exact and the right
   choice at this size. What changes at 100M+ vectors — index structure, memory, sharding, the
   store schema — is written up in [`docs/SCALING.md`](docs/SCALING.md).
@@ -171,13 +175,13 @@ python scripts/phase0_smoke.py
 | 0 — Sanity | `scripts/phase0_sanity.py` | One image → embedding, assert shape | ✅ |
 | 0 — Smoke (gate) | `scripts/phase0_smoke.py` | Full pipeline on a stand-in encoder: embed → store → FAISS → probe | ✅ |
 | 1 — Extract | `scripts/phase1_extract.py` | EuroSAT (`--dataset bigearthnet` for multi-modal) → `embeddings.parquet` | ✅ EuroSAT |
-| 2 — Search | `scripts/phase2_search.py` | FAISS retrieval — precision@10 = 0.824 | ✅ |
+| 2 — Search | `scripts/phase2_search.py` | FAISS retrieval — precision@10 = 0.822, mAP@10 = 0.774 | ✅ |
 | 3 — Probe | `scripts/phase3_probe.py` | Few-shot linear probe — 0.895±0.011 macro-F1 @50/class (5 seeds, fixed test set) | ✅ |
 | 3b — CNN baseline | `scripts/phase3_cnn_baseline.py` | Supervised ResNet-18, same splits — 5-shot: 0.547 vs probe 0.761; full: 0.949 vs probe 0.920 | ✅ |
 | 6 — Cross-modal | `scripts/phase6_crossmodal.py` | SAR↔optical retrieval + learned alignment | ✅ |
 | 4 — App | `scripts/phase4_app.py` | Gradio search UI + montage export (see Demo) | ✅ |
 | 5 — Change | `scripts/phase5_change.py` | OSCD bitemporal Δembedding change map | ✅ pipeline runs · ❌ zero-training Δembedding ≈ chance (ROC-AUC 0.47) — [analysis](research/06-change-analysis.md) |
-| 5b — Change probe | `scripts/phase5b_change_probe.py` | Patch-token maps + supervised Δembedding probe, 4-method compare | ✅ supervised tile probe F1 0.471 / IoU 0.308 (≈ fine-tuned baselines, no encoder fine-tuning) — [analysis](research/06-change-analysis.md) |
+| 5b — Change probe | `scripts/phase5b_change_probe.py` | Patch-token maps + supervised Δembedding probe, 4-method compare | ✅ supervised tile probe F1 0.510 / IoU 0.342 / Kappa 0.231, validation-chosen threshold (≈ fine-tuned baselines, no encoder fine-tuning) — [analysis](research/06-change-analysis.md) |
 
 See [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) for the full plan, datasets, and rationale.
 

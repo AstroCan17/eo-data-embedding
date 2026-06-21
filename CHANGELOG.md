@@ -16,16 +16,31 @@ All notable changes to this project are documented here. Format follows
   argument, and scoped next steps (time series, seasonal-invariant encoder, multi-date datasets).
 - **`research/07-engineering-notes.md`**: the cloud-run story — ten environment fixes, the GPU
   capacity/quota wall (`GPUS_ALL_REGIONS=1`, 1→2 denied), the CPU pivot, and the tiling bug.
+- **Retrieval `recall@k` and `mAP@k`** (reusable `search.retrieval_metrics()`, wired into Phase 2)
+  and **change-detection Cohen's Kappa + overall accuracy** (Phase 5b table). Kappa exposes
+  degenerate near-all-positive operating points that F1 alone hides.
+- **`kaggle/run_retrieval.py`** (Phase 1 extract → Phase 2 search) so retrieval metrics can be
+  regenerated on a VM; `gcp/` wrapper generalized with `RUNNER`/`FETCH`.
+
+### Changed
+- **Honest change-detection operating point.** The Phase 5b supervised probe chooses its threshold
+  on a held-out validation slice of the train split (it overfits its own training rows, so their
+  probabilities can't calibrate a transferable threshold) instead of sweeping it on test.
 
 ### Results
-- Zero-training distance stays at chance at both tile and patch granularity, but a **supervised
-  Δembedding probe reaches tile F1 0.471 / IoU 0.308** — the band of *fine-tuned* OSCD baselines
-  (FC-Siam ≈ 0.45–0.58, SeCo 0.469), with no encoder fine-tuning.
+- **Similarity search: precision@10 0.822, recall@10 0.041, mAP@10 0.774** (8× chance).
+- Zero-training distance stays at chance at both tile and patch granularity (Kappa ≈ 0 / negative),
+  but a **supervised Δembedding probe reaches tile F1 0.510 / IoU 0.342 / ROC-AUC 0.640 / Kappa 0.231**
+  at an honest validation-chosen threshold — the band of *fine-tuned* OSCD baselines (FC-Siam
+  ≈ 0.45–0.58, SeCo 0.469), with no encoder fine-tuning.
 
 ### Fixed
 - `change.tile_image()` no longer rejects scenes smaller than one tile (e.g. OSCD's 241×385 test
   scene): the check now matches the real reflect-padding constraint and falls back to replicate
   padding for tiny scenes.
+- `change.pick_threshold` searches the full 0.01–0.99 quantile range (was 0.50–0.99), so a
+  train-chosen threshold can't be clipped above every held-out score and collapse test predictions
+  to all-negative despite a discriminative ROC-AUC.
 
 ## [0.1.0] — 2026-06-09
 
