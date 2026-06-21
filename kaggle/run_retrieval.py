@@ -74,7 +74,9 @@ else:
     )
 del token
 
-# 1) Clay (pinned) + torchgeo for the EuroSAT loader + huggingface_hub for the checkpoint download.
+# 1) Clay (pinned) + torchgeo for the EuroSAT loader + huggingface_hub for the checkpoint download,
+# plus pyarrow (phase 1 writes the parquet store) and faiss-cpu (phase 2 builds the search index) —
+# the change-probe runner needs neither, so they are installed only here.
 sh(
     sys.executable,
     "-m",
@@ -84,6 +86,8 @@ sh(
     f"git+https://github.com/Clay-foundation/model.git@{CLAY_COMMIT}",
     "torchgeo>=0.6",
     "huggingface_hub",
+    "pyarrow",
+    "faiss-cpu",
 )
 
 # 2) Clay band metadata.yaml (wavelengths / means / stds), same pinned commit
