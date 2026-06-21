@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """Phase 2 — similarity search over frozen Clay embeddings.
 
-Builds a FAISS index over the embedding store and measures retrieval quality with a label-based
-metric: for each query, what fraction of its top-k nearest neighbours share its class (precision@k).
+Builds a FAISS index over the embedding store and measures retrieval quality with label-based
+metrics over each query's top-k nearest neighbours: precision@k, recall@k, and mAP@k.
 
     python scripts/phase2_search.py
     python scripts/phase2_search.py --modality s2 --k 10
@@ -47,19 +47,30 @@ def main() -> int:
     _, I = search.search(index, X, top_k=args.k + 1)  # +1: first hit is self
     neigh = I[:, 1:]  # drop self column
 
-    same = (y[neigh] == y[:, None]).mean()  # precision@k over all queries
-    counts = np.bincount(y) / len(y)
-    chance = float((counts**2).sum())  # chance two random patches share a class
-    log.info("precision@%d = %.3f  (chance ≈ %.3f)", args.k, same, chance)
+    counts = np.bincount(y)
+    m = search.retrieval_metrics(y[neigh], y, class_total=counts)  # precision/recall/mAP @k
+    chance = float(((counts / len(y)) ** 2).sum())  # chance two random patches share a class
+    log.info(
+        "precision@%d=%.3f  recall@%d=%.3f  mAP@%d=%.3f  (chance ≈ %.3f)",
+        args.k,
+        m["precision"],
+        args.k,
+        m["recall"],
+        args.k,
+        m["map"],
+        chance,
+    )
 
     lines = [
         "# Similarity search — frozen Clay embeddings (FAISS)",
         "",
         f"Modality `{args.modality}` · {len(y)} patches · top-{args.k} retrieval",
         "",
-        f"- **precision@{args.k} = {same:.3f}** (fraction of neighbours sharing the query's class)",
+        f"- **precision@{args.k} = {m['precision']:.3f}** (fraction of neighbours sharing the query's class)",
+        f"- **recall@{args.k} = {m['recall']:.3f}** (retrieved relevant / total same-class in corpus)",
+        f"- **mAP@{args.k} = {m['map']:.3f}** (mean average precision over the ranked top-{args.k})",
         f"- random-chance baseline ≈ {chance:.3f}",
-        f"- lift over chance: **{same / chance:.1f}x**",
+        f"- lift over chance: **{m['precision'] / chance:.1f}x** (precision@{args.k})",
         "",
         "Example queries (patch id → nearest neighbour ids):",
         "",

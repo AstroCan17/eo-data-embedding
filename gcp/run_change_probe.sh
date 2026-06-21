@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# End-to-end GCP GPU run for the phase 5b change probe: provision a T4 VM, run the same
-# platform-agnostic runner as Kaggle/Colab (kaggle/run_change_probe.py), pull the results, then
-# DELETE the VM. The VM is torn down on ANY exit (success, failure, Ctrl+C) via a trap, so a
-# forgotten GPU instance can't quietly burn the trial credit.
+# End-to-end GCP GPU run: provision a T4 VM, run one of the platform-agnostic runners under kaggle/
+# (default: the phase 5b change probe), pull the results, then DELETE the VM. The VM is torn down on
+# ANY exit (success, failure, Ctrl+C) via a trap, so a forgotten GPU instance can't quietly burn the
+# trial credit.
 #
 # Prereqs (see gcp/README.md): an activated (paid) GCP account with GPU quota >= 1, the `gcloud`
 # CLI authenticated (`gcloud auth login` + `gcloud config set project <id>`), the Compute Engine
@@ -10,8 +10,12 @@
 #
 # Usage:
 #   export GH_PAT=ghp_xxx
-#   bash gcp/run_change_probe.sh            # uses defaults below
+#   bash gcp/run_change_probe.sh            # phase 5b change probe (defaults below)
 #   ZONE=europe-west4-a GPU=nvidia-tesla-t4 bash gcp/run_change_probe.sh
+#   # retrieval metrics (phase 1 extract -> phase 2 search), to regenerate search_results.md:
+#   RUNNER=kaggle/run_retrieval.py FETCH=search_results.md bash gcp/run_change_probe.sh
+#   # test a PR branch (the runner reuses this pre-cloned checkout instead of re-cloning main):
+#   BRANCH=feat/eval-metrics bash gcp/run_change_probe.sh
 set -euo pipefail
 
 # --- config (override via env) ------------------------------------------------------------------
@@ -30,6 +34,8 @@ SPOT="${SPOT:-1}"                       # 1 = cheap preemptible Spot VM; ok for 
 OUT_DIR="${OUT_DIR:-gcp/_out}"
 GH_REPO="github.com/AstroCan17/eo-data-embedding.git"
 BRANCH="${BRANCH:-main}"                 # which branch the VM clones (override to test a PR branch)
+RUNNER="${RUNNER:-kaggle/run_change_probe.py}"  # which kaggle/ runner to execute on the VM
+FETCH="${FETCH:-change_probe_results.md}"       # the file it writes under ~/work to scp back
 # SSH keepalive: if the VM dies mid-command (e.g. a Spot preemption), drop the dead connection in
 # ~2 min instead of hanging forever on the TCP timeout.
 SSH_OPTS=(--ssh-flag="-o ServerAliveInterval=30" --ssh-flag="-o ServerAliveCountMax=4" --ssh-flag="-o ConnectTimeout=30")
@@ -88,8 +94,8 @@ echo "+ transferring PAT (hidden) ..."
 printf '%s' "$GH_PAT" | gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" "${SSH_OPTS[@]}" \
   --command 'umask 077; cat > "$HOME/.ghpat"'
 
-# --- 3) run the same portable runner ------------------------------------------------------------
-echo "+ running change probe on $DEVICE ..."
+# --- 3) run the selected portable runner --------------------------------------------------------
+echo "+ running $RUNNER on $DEVICE ..."
 gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" "${SSH_OPTS[@]}" --command '
   set -e
   export GH_PAT="$(cat "$HOME/.ghpat")"; rm -f "$HOME/.ghpat"
@@ -107,13 +113,13 @@ gcloud compute ssh "$VM" --zone "$ZONE" --project "$PROJECT" "${SSH_OPTS[@]}" --
   sudo apt-get install -y -q "python${PYV}-venv" >/dev/null 2>&1 \
     || { sudo apt-get update -qq && sudo apt-get install -y -q "python${PYV}-venv" >/dev/null; }
   "$BASEPY" -m venv --system-site-packages "$GEO_WORK/venv"
-  "$GEO_WORK/venv/bin/python" "$GEO_REPO/kaggle/run_change_probe.py"
+  "$GEO_WORK/venv/bin/python" "$GEO_REPO/'"$RUNNER"'"
 '
 
 # --- 4) fetch results ---------------------------------------------------------------------------
 mkdir -p "$OUT_DIR"
 echo "+ fetching results to $OUT_DIR/ ..."
-gcloud compute scp "$VM":'~/work/change_probe_results.md' "$OUT_DIR/" \
+gcloud compute scp "$VM":"~/work/$FETCH" "$OUT_DIR/" \
   --zone "$ZONE" --project "$PROJECT"
 
-echo "+ done — results at $OUT_DIR/change_probe_results.md (VM will be deleted on exit)"
+echo "+ done — results at $OUT_DIR/$FETCH (VM will be deleted on exit)"
