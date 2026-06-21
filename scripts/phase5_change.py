@@ -7,7 +7,9 @@ the ground-truth change mask (per-tile). Zero training — pure embedding geomet
 
     python scripts/phase5_change.py --checkpoint v1.5/clay-v1.5.ckpt --device cuda
 
-Metrics: threshold-free ROC-AUC + best-F1 (with its threshold), precision/recall/IoU at best-F1.
+Headline metric is threshold-free ROC-AUC. The F1/precision/recall/IoU here sweep the threshold on
+the *same* split they are scored on, so they are an **oracle upper bound**, not an honest operating
+point — for a train-chosen threshold and full metrics (Kappa/accuracy) see phase5b_change_probe.py.
 """
 
 from __future__ import annotations
@@ -92,7 +94,7 @@ def main() -> int:
             }
 
     log.info(
-        f"ROC-AUC={auc:.3f}  best-F1={best['f1']:.3f} "
+        f"ROC-AUC={auc:.3f}  oracle-F1={best['f1']:.3f} "
         f"(P={best['precision']:.3f} R={best['recall']:.3f} IoU={best['iou']:.3f})"
     )
 
@@ -105,13 +107,15 @@ def main() -> int:
         "| metric | value |",
         "|---|---|",
         f"| ROC-AUC (threshold-free) | {auc:.3f} |",
-        f"| best F1 | {best['f1']:.3f} |",
-        f"| precision @ best-F1 | {best['precision']:.3f} |",
-        f"| recall @ best-F1 | {best['recall']:.3f} |",
-        f"| IoU @ best-F1 | {best['iou']:.3f} |",
+        f"| oracle-F1 (test upper bound) | {best['f1']:.3f} |",
+        f"| precision @ oracle-F1 | {best['precision']:.3f} |",
+        f"| recall @ oracle-F1 | {best['recall']:.3f} |",
+        f"| IoU @ oracle-F1 | {best['iou']:.3f} |",
         "",
         "No model was trained — change is read straight off the distance between the two dates' "
-        "foundation-model embeddings.",
+        "foundation-model embeddings. ROC-AUC is the honest headline; the F1 row sweeps its threshold "
+        "on this same split (an optimistic oracle upper bound). For an honest train-chosen operating "
+        "point plus Kappa/accuracy, see phase5b_change_probe.py.",
     ]
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n")

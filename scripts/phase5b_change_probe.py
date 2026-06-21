@@ -56,25 +56,11 @@ def _tile_mask(mask, size=256):
     return [m[r * size : (r + 1) * size, c * size : (c + 1) * size] for r in range(rows) for c in range(cols)]
 
 
-def _binary_metrics(y_true, score):
-    """ROC-AUC (threshold-free) + best-F1 with P/R/IoU at the best threshold."""
-    from sklearn.metrics import jaccard_score, precision_recall_fscore_support, roc_auc_score
-
-    y = np.asarray(y_true).astype(int)
-    s = np.asarray(score, dtype="float64")
-    auc = roc_auc_score(y, s) if 0 < y.sum() < len(y) else float("nan")
-    best = {"f1": -1.0, "precision": 0.0, "recall": 0.0, "iou": 0.0}
-    for thr in np.quantile(s, np.linspace(0.5, 0.99, 50)):
-        pred = (s > thr).astype(int)
-        pr, rc, f1, _ = precision_recall_fscore_support(y, pred, average="binary", zero_division=0)
-        if f1 > best["f1"]:
-            best = {
-                "precision": float(pr),
-                "recall": float(rc),
-                "f1": float(f1),
-                "iou": float(jaccard_score(y, pred, zero_division=0)),
-            }
-    return auc, best
+def _eval(change, y_tr, s_tr, y_te, s_te):
+    """Pick the F1-optimal threshold on TRAIN scores, then report the held-out TEST metrics at that
+    fixed threshold (ROC-AUC stays threshold-free). Sweeping on test itself would be an oracle."""
+    thr = change.pick_threshold(y_tr, s_tr)
+    return change.binary_change_metrics(y_te, s_te, thr)
 
 
 def _extract(embedder, change, pairs, frac):
@@ -126,8 +112,9 @@ def _probe(change, tr, te, level, feature):
         LogisticRegression(max_iter=2000, class_weight="balanced", random_state=SEED),
     )
     clf.fit(x_tr, tr[lbl])
-    proba = clf.predict_proba(x_te)[:, 1]
-    return _binary_metrics(te[lbl], proba)
+    proba_tr = clf.predict_proba(x_tr)[:, 1]
+    proba_te = clf.predict_proba(x_te)[:, 1]
+    return _eval(change, tr[lbl], proba_tr, te[lbl], proba_te)
 
 
 def main() -> int:
@@ -155,25 +142,33 @@ def main() -> int:
     log.info("extracting test split ...")
     te = _extract(embedder, change, data.oscd_pairs(args.root, "test", args.download), args.frac)
 
-    # 1) zero-training baselines on the test split
-    auc_cls, best_cls = _binary_metrics(
-        te["tile_lbl"], change.embedding_change_score(te["cls1"], te["cls2"], metric="cosine")
+    # 1) zero-training baselines: pick the threshold on the train cosine scores, score on test
+    m_cls = _eval(
+        change,
+        tr["tile_lbl"],
+        change.embedding_change_score(tr["cls1"], tr["cls2"], metric="cosine"),
+        te["tile_lbl"],
+        change.embedding_change_score(te["cls1"], te["cls2"], metric="cosine"),
     )
-    auc_pmap, best_pmap = _binary_metrics(
-        te["patch_lbl"], change.embedding_change_score(te["pat1"], te["pat2"], metric="cosine")
+    m_pmap = _eval(
+        change,
+        tr["patch_lbl"],
+        change.embedding_change_score(tr["pat1"], tr["pat2"], metric="cosine"),
+        te["patch_lbl"],
+        change.embedding_change_score(te["pat1"], te["pat2"], metric="cosine"),
     )
     # 2) supervised Δembedding probes (train -> test)
-    auc_scls, best_scls = _probe(change, tr, te, "cls", args.feature)
-    auc_spat, best_spat = _probe(change, tr, te, "patch", args.feature)
+    m_scls = _probe(change, tr, te, "cls", args.feature)
+    m_spat = _probe(change, tr, te, "patch", args.feature)
 
     rows = [
-        ("CLS cosine distance", "tile", "no", auc_cls, best_cls),
-        ("patch-token cosine map", "patch", "no", auc_pmap, best_pmap),
-        (f"supervised probe ({args.feature})", "tile", "yes", auc_scls, best_scls),
-        (f"supervised probe ({args.feature})", "patch", "yes", auc_spat, best_spat),
+        ("CLS cosine distance", "tile", "no", m_cls),
+        ("patch-token cosine map", "patch", "no", m_pmap),
+        (f"supervised probe ({args.feature})", "tile", "yes", m_scls),
+        (f"supervised probe ({args.feature})", "patch", "yes", m_spat),
     ]
-    for name, lvl, tr_flag, auc, best in rows:
-        log.info(f"{name:30s} [{lvl:5s} trained={tr_flag}] AUC={auc:.3f} F1={best['f1']:.3f}")
+    for name, lvl, tr_flag, m in rows:
+        log.info(f"{name:30s} [{lvl:5s} trained={tr_flag}] AUC={m['roc_auc']:.3f} F1={m['f1']:.3f}")
 
     n_te_tiles, n_te_patches = len(te["tile_lbl"]), len(te["patch_lbl"])
     lines = [
@@ -184,19 +179,21 @@ def main() -> int:
         f"{100 * te['patch_lbl'].mean():.1f}% of patches · grid {te['grid']}.",
         "Supervised rows fit on the OSCD train split only; no encoder is fine-tuned.",
         "",
-        "| approach | level | trained | ROC-AUC | best-F1 | precision | recall | IoU |",
-        "|---|---|---|---|---|---|---|---|",
+        "| approach | level | trained | ROC-AUC | F1 | precision | recall | IoU | Kappa | accuracy |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
-    for name, lvl, tr_flag, auc, best in rows:
+    for name, lvl, tr_flag, m in rows:
         lines.append(
-            f"| {name} | {lvl} | {tr_flag} | {auc:.3f} | {best['f1']:.3f} | "
-            f"{best['precision']:.3f} | {best['recall']:.3f} | {best['iou']:.3f} |"
+            f"| {name} | {lvl} | {tr_flag} | {m['roc_auc']:.3f} | {m['f1']:.3f} | "
+            f"{m['precision']:.3f} | {m['recall']:.3f} | {m['iou']:.3f} | {m['kappa']:.3f} | "
+            f"{m['accuracy']:.3f} |"
         )
     lines += [
         "",
-        "ROC-AUC is threshold-free; best-F1 picks the operating point that maximizes F1 (its "
-        "precision/recall/IoU are at that threshold). The CLS-cosine row reproduces the phase5 "
-        "zero-training baseline for reference.",
+        "ROC-AUC is threshold-free. F1/precision/recall/IoU/Kappa/accuracy are a single operating "
+        "point whose threshold is chosen on the **train** split (F1-optimal) and then applied to the "
+        "held-out test split — not swept on test, which would be an optimistic oracle. The CLS-cosine "
+        "row reproduces the phase5 zero-training baseline for reference.",
     ]
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text("\n".join(lines) + "\n")

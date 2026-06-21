@@ -20,6 +20,56 @@ def embedding_change_score(emb_t1: np.ndarray, emb_t2: np.ndarray, metric: str =
     raise ValueError(f"unknown metric: {metric}")
 
 
+def pick_threshold(y_true, score) -> float:
+    """Threshold on `score` that maximises F1 on this split. Pick it on the TRAIN split, then
+    evaluate the held-out split at this fixed threshold — sweeping on the test split itself is an
+    oracle/optimistic operating point. Candidates are the 0.50–0.99 quantiles of `score` (the
+    change class is rare, so the operating threshold lives in the upper tail).
+    """
+    from sklearn.metrics import f1_score
+
+    y = np.asarray(y_true).astype(int)
+    s = np.asarray(score, dtype="float64")
+    best_thr, best_f1 = float(np.quantile(s, 0.5)), -1.0
+    for thr in np.quantile(s, np.linspace(0.5, 0.99, 50)):
+        f1 = f1_score(y, (s > thr).astype(int), zero_division=0)
+        if f1 > best_f1:
+            best_f1, best_thr = f1, float(thr)
+    return best_thr
+
+
+def binary_change_metrics(y_true, score, threshold: float) -> dict:
+    """Change-detection metrics at a FIXED `threshold` (chosen on train) + threshold-free ROC-AUC.
+
+    Returns ``{f1, precision, recall, iou, kappa, accuracy, roc_auc, threshold}``. ROC-AUC is
+    threshold-free; everything else is the operating point at `threshold`. Kappa and accuracy are
+    the OSCD-literature companions to F1/IoU.
+    """
+    from sklearn.metrics import (
+        accuracy_score,
+        cohen_kappa_score,
+        jaccard_score,
+        precision_recall_fscore_support,
+        roc_auc_score,
+    )
+
+    y = np.asarray(y_true).astype(int)
+    s = np.asarray(score, dtype="float64")
+    pred = (s > threshold).astype(int)
+    pr, rc, f1, _ = precision_recall_fscore_support(y, pred, average="binary", zero_division=0)
+    auc = roc_auc_score(y, s) if 0 < y.sum() < len(y) else float("nan")
+    return {
+        "f1": float(f1),
+        "precision": float(pr),
+        "recall": float(rc),
+        "iou": float(jaccard_score(y, pred, zero_division=0)),
+        "kappa": float(cohen_kappa_score(y, pred)),
+        "accuracy": float(accuracy_score(y, pred)),
+        "roc_auc": float(auc),
+        "threshold": float(threshold),
+    }
+
+
 def patch_change_map(p1: np.ndarray, p2: np.ndarray, grid_hw: tuple[int, int], metric: str = "cosine"):
     """Per-patch change scores for one tile, reshaped to the spatial grid.
 

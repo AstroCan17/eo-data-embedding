@@ -18,6 +18,44 @@ def test_change_score_l2():
     assert np.allclose(s, 2.0)  # sqrt(4)
 
 
+def test_binary_change_metrics_known_confusion():
+    # threshold 0.5 -> pred [1,1,0,0,1,0] vs y [1,0,0,0,1,1]: TP=2 FP=1 FN=1 TN=2
+    y = np.array([1, 0, 0, 0, 1, 1])
+    s = np.array([0.9, 0.8, 0.2, 0.1, 0.6, 0.4])
+    m = change.binary_change_metrics(y, s, threshold=0.5)
+    assert abs(m["precision"] - 2 / 3) < 1e-12  # TP/(TP+FP)
+    assert abs(m["recall"] - 2 / 3) < 1e-12  # TP/(TP+FN)
+    assert abs(m["f1"] - 2 / 3) < 1e-12
+    assert abs(m["iou"] - 0.5) < 1e-12  # TP/(TP+FP+FN)
+    assert abs(m["accuracy"] - 4 / 6) < 1e-12
+    assert abs(m["kappa"] - 1 / 3) < 1e-12
+    assert abs(m["roc_auc"] - 7 / 9) < 1e-12  # 7 of 9 pos/neg pairs correctly ordered
+    assert m["threshold"] == 0.5
+
+
+def test_pick_threshold_separates_clean_train():
+    y = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    s = np.array([0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9])
+    from sklearn.metrics import f1_score
+
+    thr = change.pick_threshold(y, s)
+    assert f1_score(y, (s > thr).astype(int)) == 1.0  # a gap threshold classifies train perfectly
+
+
+def test_train_threshold_is_not_an_oracle():
+    # Threshold picked on train (~0.5) is applied to a shifted test split, so its F1 can only be
+    # <= the oracle F1 that would sweep the threshold on test itself. Guards the honesty fix.
+    y_tr = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    s_tr = np.array([0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9])
+    thr = change.pick_threshold(y_tr, s_tr)
+
+    y_te = np.array([0, 0, 1, 1])
+    s_te = np.array([0.1, 0.2, 0.45, 0.55])
+    honest = change.binary_change_metrics(y_te, s_te, thr)
+    oracle = change.binary_change_metrics(y_te, s_te, change.pick_threshold(y_te, s_te))
+    assert honest["f1"] <= oracle["f1"]
+
+
 def test_tile_image_pads_to_grid():
     img = torch.zeros(3, 300, 260)
     tiles = change.tile_image(img, size=256)
