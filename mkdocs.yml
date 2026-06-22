@@ -1,0 +1,72 @@
+site_name: eo-data-embedding
+site_description: Multi-modal geospatial embedding search & change detection on a frozen ViT foundation model
+site_url: https://astrocan17.github.io/eo-data-embedding/
+repo_url: https://github.com/AstroCan17/eo-data-embedding
+repo_name: AstroCan17/eo-data-embedding
+docs_dir: docs
+
+# research/*.md and CHANGELOG.md are copied into docs/ at build time (see `make docs` and
+# .github/workflows/docs.yml) so the single source of truth stays in the repo root, with no
+# duplicated markdown committed under docs/.
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.highlight
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Decision records:
+      - Overview: research/README.md
+      - Datasets: research/01-datasets.md
+      - Foundation models: research/02-foundation-models.md
+      - Phase-0 decisions: research/03-phase0-decisions.md
+      - Clay integration: research/04-clay-integration.md
+      - Cross-modal: research/05-crossmodal.md
+      - Change analysis: research/06-change-analysis.md
+      - Engineering notes: research/07-engineering-notes.md
+  - Project plan: PROJECT_PLAN.md
+  - Scaling: SCALING.md
+  - Changelog: changelog.md
+
+validation:
+  nav:
+    omitted_files: info
+    not_found: warn
+  links:
+    not_found: warn
+    absolute_links: ignore
+    unrecognized_links: ignore

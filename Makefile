@@ -18,7 +18,7 @@
 COMPOSE ?= docker compose
 
 .PHONY: build build-cpu shell shell-cpu sanity smoke clay-smoke extract cnn-baseline fetch-oscd \
-        change crossmodal app demo gpu-check test lint fmt clean
+        change crossmodal app demo docs gpu-check test lint fmt clean
 
 build:
 	$(COMPOSE) build dev
@@ -65,6 +65,11 @@ demo:
 
 gpu-check:
 	$(COMPOSE) run --rm dev python -c "import torch; print('cuda:', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else '-')"
+
+# Preview the MkDocs Material site locally (pip install -r requirements-docs.txt first).
+# Copies research/ + CHANGELOG into docs/ (gitignored) so links resolve, then serves on :8000.
+docs:
+	cp -r research docs/research && cp CHANGELOG.md docs/changelog.md && mkdocs serve
 
 test:
 	pytest

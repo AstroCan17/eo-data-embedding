@@ -1,0 +1,2 @@
+# Docs site (MkDocs Material) — used by `make docs` and .github/workflows/docs.yml.
+mkdocs-material>=9.5

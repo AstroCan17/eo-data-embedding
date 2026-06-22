@@ -1,6 +1,7 @@
 # Multi-Modal Geospatial Embedding Search & Change Detection
 
 [![CI](https://github.com/AstroCan17/eo-data-embedding/actions/workflows/ci.yml/badge.svg)](https://github.com/AstroCan17/eo-data-embedding/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-website-blue)](https://astrocan17.github.io/eo-data-embedding/)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
