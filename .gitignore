@@ -45,3 +45,11 @@ gcp/_out/
 
 # Demo bundle (downloaded at runtime by `eo-data-embedding demo`)
 demo/
+
+# Docs site (MkDocs build output + content copied in at build time from research/ and CHANGELOG.md)
+site/
+docs/research/
+docs/changelog.md
+
+# Local tooling scratch
+graphify-out/

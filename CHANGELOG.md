@@ -5,7 +5,20 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-06-22
+
 ### Added
+- **pip-installable CLI** (`eo-data-embedding` / `eoemb`, `src/eo_data_embedding/cli.py`): a `demo`
+  flagship plus `app` and `extract`/`search`/`probe`/`change`/`sanity`/`smoke` subcommands that delegate
+  to the existing phase scripts.
+- **Plug-and-play CPU demo** (`eo-data-embedding demo`, `src/eo_data_embedding/demo.py`): downloads
+  EuroSAT + a prebuilt bundle, picks a random held-out tile, classifies it live with the trained probe
+  (✅/❌ vs ground truth) and shows its FAISS nearest neighbours — no GPU, no Clay download, no retraining.
+  `demo-bundle.zip` = `embeddings.parquet` + a version-independent `probe.npz`, shipped as the Release asset.
+- **`LinearProbe`** + `train_probe`/`save_probe`/`load_probe` (`probe.py`): a numpy-only forward pass over
+  saved `coef_`/`intercept_`/`classes_`, keeping the demo bundle independent of the scikit-learn version.
+- **Documentation site** (MkDocs Material → GitHub Pages, `mkdocs.yml`, `.github/workflows/docs.yml`):
+  https://astrocan17.github.io/eo-data-embedding/
 - **Phase 5b change probe** (`scripts/phase5b_change_probe.py`): the two follow-ups from
   `research/06` §5 — patch-token distance maps and a supervised Δembedding probe — in a four-method
   comparison on frozen Clay v1.5 over OSCD.
