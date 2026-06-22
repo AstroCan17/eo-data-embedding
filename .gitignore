@@ -42,3 +42,6 @@ kaggle/_pull/
 
 # GCP scratch
 gcp/_out/
+
+# Demo bundle (downloaded at runtime by `eo-data-embedding demo`)
+demo/

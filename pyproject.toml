@@ -12,6 +12,10 @@ license = { text = "MIT" }
 authors = [{ name = "Can Deniz Kaya" }]
 dynamic = ["dependencies"]
 
+[project.scripts]
+eo-data-embedding = "eo_data_embedding.cli:main"
+eoemb = "eo_data_embedding.cli:main"
+
 [project.optional-dependencies]
 # Lint + test toolchain. Note: `dependencies` is dynamic from requirements.txt, so any
 # `pip install -e .` (CI included) installs the full stack on top of this.

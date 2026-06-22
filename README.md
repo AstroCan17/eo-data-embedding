@@ -101,9 +101,30 @@ S1 GRD-vs-RTC offset note in [`research/05-crossmodal.md`](research/05-crossmoda
 
 ## Demo
 
-`make app` serves an interactive Gradio search UI (`scripts/phase4_app.py`); `--export` renders a
-static montage. Each row: a query tile → its nearest neighbours in Clay-embedding space
-(green label = same EuroSAT class as the query, red = different):
+### Try it on your laptop — CPU, no GPU, no Clay
+
+```bash
+git clone https://github.com/AstroCan17/eo-data-embedding.git
+cd eo-data-embedding
+pip install -e .
+eo-data-embedding demo          # downloads EuroSAT + a small prebuilt bundle, opens :7860
+```
+
+`eo-data-embedding demo` is plug-and-play: it downloads EuroSAT and a ~8 MB bundle of **precomputed
+frozen-Clay embeddings + the trained few-shot probe**, then serves a Gradio UI. Hit **🎲 random
+tile** for a fresh *held-out* EuroSAT scene — the probe predicts its land-use class (✅/❌ vs the
+true label) and FAISS shows the nearest neighbours. No GPU, no 2 GB Clay checkpoint, no training at
+runtime: Clay's heavy embedding step is precomputed once, and the probe is loaded from the bundle.
+
+The probe is an EuroSAT-specific classifier (10 land-use classes, Sentinel-2), so it is accurate on
+EuroSAT tiles — that is exactly the distribution it was trained on. The full Clay pipeline (embed
+your own scenes) still runs on a GPU host via the phase scripts / `make extract`.
+
+### Maintainer montage
+
+`make app` serves the same search UI over `artifacts/embeddings.parquet`; `scripts/phase4_app.py
+--export` renders the static montage below. Each row: a query tile → its nearest neighbours in
+Clay-embedding space (green label = same EuroSAT class as the query, red = different):
 
 ![similarity search demo](docs/demo_search.png)
 

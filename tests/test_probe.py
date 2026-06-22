@@ -77,3 +77,18 @@ def test_full_probe_uses_same_test_set(rng):
     assert ref["n_test"] == multi["n_test"]
     assert ref["n_train"] == len(y) - ref["n_test"]
     assert ref["macro_f1"] >= multi["macro_f1_mean"] - 0.2  # full supervision shouldn't collapse
+
+
+def test_train_save_load_probe_roundtrip(rng, tmp_path):
+    X, y = _blobs(rng)
+    clf, test = probe.train_probe(X, y, test_frac=0.2, split_seed=42)
+    assert len(test) == 18  # 20% of 90, the held-out split the demo predicts on
+
+    path = probe.save_probe(clf, str(tmp_path / "probe.npz"))
+    loaded = probe.load_probe(path)
+
+    # the numpy-only LinearProbe must reproduce sklearn's predictions exactly
+    assert np.array_equal(loaded.predict(X), clf.predict(X))
+    assert loaded.predict_proba(X).shape == (len(y), 3)
+    np.testing.assert_allclose(loaded.predict_proba(X).sum(axis=1), 1.0, atol=1e-9)
+    assert (loaded.predict(X[test]) == y[test]).mean() > 0.8  # separable blobs -> accurate
