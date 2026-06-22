@@ -45,3 +45,8 @@ gcp/_out/
 
 # Demo bundle (downloaded at runtime by `eo-data-embedding demo`)
 demo/
+
+# MkDocs build output + sources copied in at build time (source of truth stays in repo root)
+site/
+docs/research/
+docs/changelog.md
