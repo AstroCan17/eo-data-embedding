@@ -17,6 +17,10 @@ are omitted (see SDP §3 for rationale).
 > (decision records, honest metrics, modular source). Phase 5 is largely *formalising and
 > cross-referencing* existing content, not writing from scratch.
 
+> **Update (Phase 5):** every "Action" below has now been drafted under `drd/` and
+> `traceability/`. The statuses are retained as the Phase-2 snapshot; the open carry-overs
+> are the EOPF coverage gate (`pytest-cov`) and tooling reconciliation in §"Tooling gaps".
+
 ## Detail
 
 ### SRS — Software Requirements Specification · *Partial*
@@ -53,8 +57,8 @@ are omitted (see SDP §3 for rationale).
 - **Action:** Author `drd/vv-plan.md` covering all three merged DRDs.
 
 ### SVR — Software Verification Report · *Partial*
-- **Have:** Honest, validation-chosen metrics already published: retrieval **mAP@10 0.773 /
-  p@10 0.821**; tile change-detection **F1 0.510 / Kappa 0.231 / ROC-AUC 0.640**; negative
+- **Have:** Honest, validation-chosen metrics already published: retrieval **mAP@10 0.774 /
+  p@10 0.822**; tile change-detection **F1 0.510 / Kappa 0.231 / ROC-AUC 0.640**; negative
   results documented in `research/06–07`.
 - **Gap:** Results are scattered across README / research notes, not consolidated as a
   verification report tied to requirements and test cases.

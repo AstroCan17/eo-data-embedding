@@ -43,6 +43,8 @@ would be disproportionate. The rationale for each call lives in
 
 ## Status
 
-**Phase 2 of the ECSS migration — tailoring baseline & gap analysis.** The document tree
-and gap analysis are established here; the PRODUCE artefacts under `drd/` are scaffolded as
-placeholders and authored in Phase 5.
+**Phases 2 + 5 of the ECSS migration.** Phase 2 established the document tree and gap
+analysis; Phase 5 drafted the ten PRODUCE artefacts under `drd/` from existing repository
+material (requirements, design, interfaces, reuse file, V&V plan + report, PA plan, risk
+register) and the traceability skeleton. Remaining work: reconcile EOPF CI tooling and the
+≥ 70 % coverage gate (Phase 4), and a final review pass against the populated DRDs (Phase 7).

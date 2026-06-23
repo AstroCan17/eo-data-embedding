@@ -47,7 +47,7 @@ the existing repository material reused as input.
 | **SValP** — Software Validation Plan | Annex J | **PRODUCE** (merged) | docs/ + tests/ | Merged into V&V Plan; ML validation discipline per ECSS-E-HB-40-02A. |
 | **SUITP** — Unit/Integration Test Plan | Annex K | **PRODUCE** (merged) | tests/ | Merged into V&V Plan; reuses `tests/` (9 files) + `conftest.py` + CI. |
 | **SVS** — Software Validation Specification | Annex L | REUSE | tests/ | Test cases + threshold/metrics methodology in `research/06` and test suite. |
-| **SVR** — Software Verification Report | Annex M | **PRODUCE** | docs/ | `drd/vv-report.md` — test results + honest metrics (mAP@10 0.773, F1 0.510, Kappa 0.231, ROC-AUC 0.640) including negative results. |
+| **SVR** — Software Verification Report | Annex M | **PRODUCE** | docs/ | `drd/vv-report.md` — test results + honest metrics (mAP@10 0.774, F1 0.510, Kappa 0.231, ROC-AUC 0.640) including negative results. |
 | **SRF** — Software Reuse File | Annex N | **PRODUCE** | docs/software-reuse-file (EOPF mandatory) | Clay v1.5, FAISS, TorchGeo, PyTorch, rasterio — reuse declaration. |
 | **SDP** — Software Development Plan | Annex O | **PRODUCE** | docs/ | *This document*; reuses `PROJECT_PLAN.md`, `CONTRIBUTING.md`, git workflow. |
 | **SRevP** — Software Review Plan | Annex P | TAILORED-OUT | — | Single-developer project; review approach documented in §2. No formal review boards. |
