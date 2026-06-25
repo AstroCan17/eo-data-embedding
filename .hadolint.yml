@@ -1,0 +1,9 @@
+# Configuration file for hadolint
+failure-threshold: warning
+override:
+  info:
+    # By default, the generated project uses the 'latest' tag of the
+    # Dask environment container image.
+    # User projects should remove this exception and use a well-defined
+    # version of the 'dask' image.
+    - DL3007

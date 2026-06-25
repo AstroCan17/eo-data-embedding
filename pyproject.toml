@@ -1,0 +1,118 @@
+# Copyright 2026 Can Deniz Kaya
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "eo_data_embedding"
+authors = [{name = "Can Deniz Kaya"}]
+dynamic = ["version", "description"]
+readme = "README.md"
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+    "Private :: Do Not Upload",
+]
+requires-python = ">=3.11"
+
+# EOPF CPM is pinned to a fixed version for a stable build environment
+# (as recommended by the project template). The remaining dependencies are
+# migrated from the original geo-embed-eo requirements.txt.
+dependencies = [
+    # EOPF Core Python Modules (CPM)
+    "eopf == 2.8.1",
+    # Core ML
+    "torch >= 2.1",
+    "torchvision >= 0.16",
+    "timm >= 1.0.0",
+    # Geospatial / EO
+    "torchgeo >= 0.6",
+    "webdataset >= 0.2",
+    "zarr >= 2.18, <3",  # relaxed from ==2.18.0 to coexist with eopf's zarr
+    "numcodecs == 0.15.1",
+    "xarray",
+    "braceexpand",
+    "rasterio >= 1.3",
+    # Embeddings / search
+    "faiss-cpu >= 1.7",
+    "pandas >= 2.0",
+    "pyarrow >= 14.0",
+    "numpy >= 1.24",
+    "scikit-learn >= 1.3",
+    # Demo / app
+    "gradio >= 4.0",
+    # NOTE: starlette is HIGH-vuln (CVE-2026-48818 / CVE-2026-54283, fixed in 1.3.1)
+    # but eopf==2.8.1 hard-pins starlette==1.0.1, so we cannot bump it here. Trivy
+    # reports this (deps-sec, allow_failure); the fix must come from a newer eopf.
+    # Utils
+    "pyyaml >= 6.0",
+]
+license = {file = "LICENSE"}
+
+[project.scripts]
+eo-data-embedding = "eo_data_embedding.cli:main"
+eoemb = "eo_data_embedding.cli:main"
+
+[project.optional-dependencies]
+cluster-plugin = ["eopf[cluster-plugin] >= 1.5.0"]
+tests = ["eopf[tests] >= 1.5.0"]
+linter = ["eopf[linter] >= 1.5.0"]
+typing = ["eopf[typing] >= 1.5.0"]
+formatter = ["eopf[formatter] >= 1.5.0"]
+security = ["eopf[security] >= 1.5.0"]
+notebook = ["eopf[notebook] >= 1.5.0"]
+doc = [
+    "eopf[doc] >= 1.5.0",
+    "sphinxcontrib-mermaid",
+]
+complexity = ["eopf[complexity] >= 1.5.0"]
+doc-cov = ["eopf[doc-cov] >= 1.5.0"]
+dev = ["eopf[dev] >= 1.5.0"]
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+
+[tool.pytest.ini_options]
+# 'slow' tests run external phase scripts via subprocess; deselected by default
+# (run them explicitly with `pytest -m slow`).
+addopts = "-m 'not slow'"
+markers = [
+    "integration",
+    "unit",
+    "need_files",
+    "slow: end-to-end phase scripts (subprocess); deselected by default",
+    "real_s3: tests that hit S3 storage directly",
+]
+
+[tool.coverage.run]
+# Exclude UI / entry-point / logging / external-IO glue that requires a browser,
+# GPU, datasets or network to exercise — the algorithmic core (embed/probe/search/
+# store/change/baseline) is unit-tested. Mirror this in SonarQube via SQ_COV_EXCLUSIONS.
+omit = [
+    "eo_data_embedding/demo.py",
+    "eo_data_embedding/cli.py",
+    "eo_data_embedding/log.py",
+    "eo_data_embedding/data.py",
+]

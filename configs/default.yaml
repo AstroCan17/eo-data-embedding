@@ -1,0 +1,27 @@
+# Default configuration for eo-data-embedding.
+# Phase scripts read their argparse *defaults* from here (CLI flags still override).
+# Loaded via eo_data_embedding.config.load_config().
+
+model:
+  name: clay # clay | prithvi | timm-vit (sanity/baseline)
+  device: cuda # cuda | cpu  (fp32 everywhere — P40 is Pascal, fp16 is slow)
+
+data:
+  dataset: eurosat # eurosat (fast optical) | bigearthnet (multi-modal, ~120GB)
+  root: data/
+  subset_size: 2000 # keep small — embed a few thousand patches, not the whole set
+
+embed:
+  batch_size: 32
+  store_path: artifacts/embeddings.parquet
+
+search:
+  top_k: 10
+  out: artifacts/search_results.md
+
+probe:
+  shots: [5, 20, 50]
+  out: artifacts/probe_results.md
+
+change:
+  frac: 0.05 # changed-pixel fraction for a tile to count as changed

@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 120
+# E203 (whitespace before ':') conflicts with black's slice formatting; W503 is
+# black-incompatible (line break before binary operator).
+extend-ignore = E203, W503
+per-file-ignores =
+    # imported but unused
+    __init__.py: F401

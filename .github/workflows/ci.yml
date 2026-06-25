@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # Pure source checks — no package import, so no eopf / heavy deps needed.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install flake8 black isort bandit xenon
+      - name: flake8
+        run: flake8 eo_data_embedding tests
+      - name: black
+        run: black --check --diff .
+      - name: isort
+        run: isort eo_data_embedding tests --check --diff
+      - name: bandit
+        run: bandit -c bandit.yml -r eo_data_embedding
+      - name: xenon (complexity)
+        run: xenon --max-average B --max-modules C --max-absolute D eo_data_embedding
+
+  # Type-check, tests and docstring coverage need the package installed, which
+  # pulls eopf from the EOPF CPM index (CPM_INDEX_URL secret) plus a CPU torch.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install CPU torch (avoid the CUDA wheels)
+        run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+      - name: Install package with eopf tooling extras
+        env:
+          PIP_EXTRA_INDEX_URL: ${{ secrets.CPM_INDEX_URL }}
+        run: pip install -e ".[tests]" ".[typing]" ".[doc-cov]"
+      - name: mypy
+        run: mypy eo_data_embedding
+      - name: pytest (unit)
+        run: pytest -m unit --cov=eo_data_embedding --cov-report=term-missing
+      - name: docstring coverage
+        run: docstr-coverage -f -P -m -F 30 eo_data_embedding
+
+  hadolint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          config: .hadolint.yml
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install flit
+      - name: Build wheel + sdist
+        run: flit build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*

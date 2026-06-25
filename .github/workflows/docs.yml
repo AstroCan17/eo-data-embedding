@@ -1,0 +1,50 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow the workflow to publish to GitHub Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One concurrent deployment; cancel superseded runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install CPU torch (apidoc imports the package)
+        run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+      - name: Install docs extras (eopf[doc] + sphinxcontrib-mermaid)
+        env:
+          PIP_EXTRA_INDEX_URL: ${{ secrets.CPM_INDEX_URL }}
+        run: pip install -e ".[doc]"
+      - name: Set docs release label
+        run: sed -i "s+REPLACE_ME+${{ github.ref_name }}+" docs/conf.py
+      - name: Sphinx build
+        run: sphinx-build -b html docs _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

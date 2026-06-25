@@ -1,0 +1,13 @@
+[run]
+source = eo_data_embedding
+# Exclude UI / entry-point / logging / external-IO glue that needs a browser, GPU,
+# datasets or network to exercise. The algorithmic core (embed/probe/search/store/
+# change/baseline/config) is unit-tested. Mirror in SonarQube via SQ_COV_EXCLUSIONS.
+omit =
+    eo_data_embedding/demo.py
+    eo_data_embedding/cli.py
+    eo_data_embedding/log.py
+    eo_data_embedding/data.py
+
+[report]
+show_missing = true
