@@ -44,9 +44,7 @@ jobs:
       - name: Install CPU torch (avoid the CUDA wheels)
         run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
       - name: Install package with eopf tooling extras
-        env:
-          PIP_EXTRA_INDEX_URL: ${{ secrets.CPM_INDEX_URL }}
-        run: pip install -e ".[tests]" ".[typing]" ".[doc-cov]"
+        run: pip install -e ".[tests,typing,doc-cov]"
       - name: mypy
         run: mypy eo_data_embedding
       - name: pytest (unit)

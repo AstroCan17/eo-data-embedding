@@ -28,8 +28,6 @@ jobs:
       - name: Install CPU torch (apidoc imports the package)
         run: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
       - name: Install docs extras (eopf[doc] + sphinxcontrib-mermaid)
-        env:
-          PIP_EXTRA_INDEX_URL: ${{ secrets.CPM_INDEX_URL }}
         run: pip install -e ".[doc]"
       - name: Set docs release label
         run: sed -i "s+REPLACE_ME+${{ github.ref_name }}+" docs/conf.py
