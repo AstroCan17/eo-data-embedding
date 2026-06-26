@@ -22,6 +22,7 @@
 [![docs](https://github.com/AstroCan17/eo-data-embedding/actions/workflows/docs.yml/badge.svg)](https://astrocan17.github.io/eo-data-embedding/)
 [![python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org)
 [![license](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE)
+[![ECSS](https://img.shields.io/badge/ECSS--E--ST--40C-tailored-5b2c8f)](compliance/)
 
 Embed Earth-observation tiles **once** with a frozen [Clay v1.5](https://clay-foundation.github.io/model/)
 Vision Transformer, then serve every downstream task — similarity search, few-shot
@@ -65,6 +66,29 @@ cheaply over the stored vectors:
 Figures are regenerated from the public demo bundle (a 2,000-tile EuroSAT
 subset); the headline numbers above are the full evaluation from the
 [Software Verification Report](compliance/drd/vv-report.md).
+
+## Engineering & compliance
+
+This is a research / portfolio-grade pipeline, but it was developed following a
+**proportionate, tailored ECSS software-engineering lifecycle** for Earth-observation
+ML data-processing software — the way a Copernicus / EOPF processor is engineered,
+scaled down to a single-developer project (full tailoring rationale in the
+[Software Development Plan](compliance/software-development-plan.md)):
+
+| Standard | Scope | Role here |
+| --- | --- | --- |
+| **ECSS-E-ST-40C** Rev.1 | Software engineering | DRD set, life-cycle, V&V |
+| **ECSS-E-HB-40-02A** | ML verification & validation | data/model validation discipline |
+| **ECSS-Q-ST-80C** | Software product assurance | PA plan, CI quality gates |
+| **ECSS-M-ST-80C** | Risk management | risk register |
+
+The full deliverable tree — SDP, SRS, SDD, ICD, SRF, V&V plan & report, PA plan and
+risk register — lives in [`compliance/`](compliance/) and the
+[documentation](https://astrocan17.github.io/eo-data-embedding/). Requirements are traced
+end to end (requirement ↔ design ↔ code ↔ test) in the
+[traceability matrix](compliance/traceability/traceability-matrix.md), and verification
+results are reported honestly — including the negative ones — in the
+[V&V report](compliance/drd/vv-report.md).
 
 ## Project structure
 
